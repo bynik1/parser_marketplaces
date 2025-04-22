@@ -3,3 +3,4 @@ chromedriver.exe
 ozon_api/
 .idea/
 image/
+*.sqlite3
