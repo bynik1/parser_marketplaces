@@ -2,116 +2,119 @@ import time
 import json
 from selenium import webdriver
 from selenium_stealth import stealth
-from selenium_authenticated_proxy import SeleniumAuthenticatedProxy
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+class OzonParser:
+    def __init__(self, query, scroll_count=2, scroll_loops=3):
+        self.query = query
+        self.scroll_count = scroll_count
+        self.scroll_loops = scroll_loops
+        self.count_link = 0
+        self.driver = self._init_driver()
 
-# Настройка опций Chrome
-chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument("start-maximized")
-chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-chrome_options.add_experimental_option('useAutomationExtension', False)
+    def _init_driver(self):
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument("start-maximized")
+        chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        chrome_options.add_experimental_option('useAutomationExtension', False)
 
-# Инициализация драйвера
-driver = webdriver.Chrome(options=chrome_options)
+        driver = webdriver.Chrome(options=chrome_options)
 
-# Применение Selenium Stealth
-stealth(driver,
-        languages=["en-US", "en"],
-        vendor="Google Inc.",
-        platform="Win32",
-        webgl_vendor="Intel Inc.",
-        renderer="Intel Iris OpenGL Engine",
-        fix_hairline=True)
+        stealth(driver,
+                languages=["en-US", "en"],
+                vendor="Google Inc.",
+                platform="Win32",
+                webgl_vendor="Intel Inc.",
+                renderer="Intel Iris OpenGL Engine",
+                fix_hairline=True)
+        return driver
 
-# Переход на сайт Ozon
-driver.get("https://www.ozon.ru/")
-time.sleep(5)  # Ожидание загрузки страницы
+    def open_site(self, url="https://www.ozon.ru/"):
+        self.driver.get(url)
+        # Ожидаем появления строки поиска (как индикатор загрузки)
+        try:
+            WebDriverWait(self.driver, 15).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "input[placeholder='Искать на Ozon']"))
+            )
+        except Exception as e:
+            print(f"Ошибка при загрузке страницы: {e}")
 
-element_search = driver.find_element(By.CSS_SELECTOR, "input[placeholder='Искать на Ozon']")
-element_search.click()
-element_search.send_keys("s24")
-element_search_button = driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
-element_search_button.click()
-scroll_pause = 1  # задержка между скроллами
-last_height = driver.execute_script("return document.body.scrollHeight")
-count_link = 0
+    def search_product(self):
+        element_search = self.driver.find_element(By.CSS_SELECTOR, "input[placeholder='Искать на Ozon']")
+        element_search.click()
+        element_search.send_keys(self.query)
+        element_search_button = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
+        element_search_button.click()
 
-for j in range(2):
-    for i in range(3):
-        # Прокрутка в самый низ
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(scroll_pause)
+    def scroll_and_parse(self):
+        last_height = self.driver.execute_script("return document.body.scrollHeight")
 
-        # Получаем новую высоту документа после прокрутки
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height == last_height:
-            break  # если высота не изменилась — дошли до конца
-        last_height = new_height
+        for j in range(self.scroll_count):
+            for i in range(self.scroll_loops):
+                self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                time.sleep(1)
+                new_height = self.driver.execute_script("return document.body.scrollHeight")
+                if new_height == last_height:
+                    break
+                last_height = new_height
 
-    element_products = driver.find_elements(By.CSS_SELECTOR, "div[data-widget='tileGridDesktop']")
-    for element in element_products:
-        #print(element.text)  # выводит текст внутри элемента
+            self._parse_products()
 
-        html = element.get_attribute("innerHTML")
-        soup = BeautifulSoup(html, "html.parser")
+    def _parse_products(self):
+        elements = self.driver.find_elements(By.CSS_SELECTOR, "div[data-widget='tileGridDesktop']")
+        for element in elements:
+            html = element.get_attribute("innerHTML")
+            soup = BeautifulSoup(html, "html.parser")
 
-        # print(html)
-        with open("output.txt", "w", encoding="utf-8") as file:
-           file.write(soup.prettify())
+            # with open("output.txt", "w", encoding="utf-8") as file:
+            #     file.write(soup.prettify())
 
-    #     time.sleep(5)  # Ожидание загрузки страницы
-        for element in soup.find_all("div", attrs={"data-index": True}):
-            print(f"Товар номер {count_link}: ")
-            a_tag = element.select_one("a.tile-clickable-element")
-            link = "https://www.ozon.ru" + a_tag["href"] if a_tag else None
-            print(link)
-            # Цена со скидкой
-            price = element.select_one("span.tsHeadline500Medium")
-            price = price.get_text(strip=True) if price else None
-            print(price)
-            # Старая цена
-            old_price = element.select_one("span.tsBodyControl400Small.c390-b")
-            old_price = old_price.get_text(strip=True) if old_price else None
-            print(old_price)
+            for product in soup.find_all("div", attrs={"data-index": True}):
+                self._print_product_info(product)
 
-            # Скидка
-            discount = element.select_one("span.tsBodyControl400Small:not(.c390-b)")
-            discount = discount.get_text(strip=True) if discount else None
-            print(discount)
+    def _print_product_info(self, element):
+        print(f"Товар номер {self.count_link}: ")
 
-            # Осталось товара
-            left = element.select_one("div.p6b20-a span.p6b20-a4")
-            left = left.get_text(strip=True) if left else None
-            print(left)
+        def get_text(selector, cls=None):
+            el = element.select_one(selector if not cls else f"{selector}.{cls}")
+            return el.get_text(strip=True) if el else None
 
-            # Название
-            name = element.select_one("a.tile-clickable-element span.tsBody500Medium")
-            name = name.get_text(strip=True) if name else None
-            print(name)
+        def get_attr(selector, attr):
+            el = element.select_one(selector)
+            return el[attr] if el and attr in el.attrs else None
 
-            # Рейтинг
-            rating = element.select_one("div.tsBodyMBold span:nth-of-type(1) span")
-            rating = rating.get_text(strip=True) if rating else None
-            print(rating)
+        link = get_attr("a.tile-clickable-element", "href")
+        print(f"https://www.ozon.ru{link}" if link else None)
 
-            # Отзывы
-            reviews = element.select_one("div.tsBodyMBold span:nth-of-type(2) span")
-            reviews = reviews.get_text(strip=True) if reviews else None
-            print(reviews)
+        print(get_text("span", "tsHeadline500Medium"))  # price
+        print(get_text("span", "tsBodyControl400Small.c390-b"))  # old price
+        print(get_text("span.tsBodyControl400Small:not(.c390-b)"))  # discount
+        print(get_text("div.p6b20-a span.p6b20-a4"))  # left
+        print(get_text("a.tile-clickable-element span.tsBody500Medium"))  # name
+        print(get_text("div.tsBodyMBold span:nth-of-type(1) span"))  # rating
+        print(get_text("div.tsBodyMBold span:nth-of-type(2) span"))  # reviews
 
-            count_link+=1
-        
-page_source = driver.page_source
-soup = BeautifulSoup(page_source, "html.parser")
+        self.count_link += 1
 
-with open("page.html", "w", encoding="utf-8") as file:
-    file.write(soup.prettify())
+    def save_full_page(self, filename="page.html"):
+        soup = BeautifulSoup(self.driver.page_source, "html.parser")
+        with open(filename, "w", encoding="utf-8") as file:
+            file.write(soup.prettify())
+
+    def run(self):
+        self.open_site()
+        self.search_product()
+        self.scroll_and_parse()
+        self.save_full_page()
+        print(f"Количество ссылок: {self.count_link}")
+        self.driver.quit()
 
 
-print(f"Количество ссылок: {count_link}")
-# Закрытие браузера
-driver.quit()
-
-
-    
+if __name__ == "__main__":
+    query = input("Напишите товар для поиска: ")
+    while not query:
+        query = input("Напишите, пожалуйста товар для поиска: ")
+    parser = OzonParser(query="s24")
+    parser.run()
