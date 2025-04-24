@@ -3,4 +3,8 @@ chromedriver.exe
 ozon_api/
 .idea/
 image/
+images/
 *.sqlite3
+__pycache__/
+*.pyc
+*.py[cod]
