@@ -1,0 +1,22 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link type="text/css" href="{% static 'main/css/styles.css' %}" rel="stylehseet">
+</head>
+<body>
+    <ul>
+        <li><a href="{% url 'home' %}">Главная страница</a></li>
+        {% for m in menu %}
+        {% if not forloop.last %}<li>{% else %}<li class="last">{% endif %}
+            <a href="{% url m.url_name %}">{{ m.title }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+{% block content %} {% endblock %}
+</body>
+</html>

@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %} 
+<h1>{{ title }}</h1>
+<ul>
+    {% for r in requests %}
+    {% if r.is_published %}
+    <li>
+        <h2>{{ r.title }}</h2>
+        <p>{{ r.content }}</p>
+        <p><a href="{% url 'history_id' r.id %}">Читать пост</a></p>
+        {% if not forloop.last %}
+        <hr>
+        {% endif %}
+    </li>
+    {% endif %}
+    {% endfor %}
+</ul>
+{% endblock %}
+    
+</body>
+</html>
