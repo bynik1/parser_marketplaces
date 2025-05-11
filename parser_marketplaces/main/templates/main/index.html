@@ -1,4 +1,13 @@
 {% extends 'base.html' %}
 {% block content %} 
 <h1>{{ title }}</h1>
+<form method="post">
+    {% csrf_token %}
+    <label for="inputText">Введите значение:</label>
+    <input type="text" id="inputText" name="inputText" placeholder="Например, S24">
+    <button type="submit">Отправить</button>
+</form>
+{% if value %}
+    <p>Вы ввели: <strong>{{ value }}</strong></p>
+{% endif %}
 {% endblock %}

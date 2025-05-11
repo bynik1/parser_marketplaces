@@ -1,6 +1,12 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseNotFound
 from django.template.loader import render_to_string
+import sys
+from wb_api import ProductManager  # ✅
+from ozon_selenium import OzonParser  # ✅
+
+
+
 
 
 menu = [{'title': "О сайте", 'url_name': 'about'},
@@ -15,12 +21,23 @@ data_db = [
 ]
 
 def index(request):
+    input_value = None
+    if request.method == 'POST':
+        input_value = request.POST.get('inputText')
+        print(f"Ввели: {input_value}", file=sys.stdout, flush=True)
+        if input_value:
+            # ProductManager().search_and_display(input_value)
+            OzonParser(input_value).run()
+
+
+
     data = {
         'title': 'Главная страница',
         'menu': menu,
+        'value': input_value,  # передаём введённое значение (если есть)
     }
-    return render(request, 'main/index.html', context=data)
 
+    return render(request, 'main/index.html', context=data)
 
 
 def page_not_found(request, exception):

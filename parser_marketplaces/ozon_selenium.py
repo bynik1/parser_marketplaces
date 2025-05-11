@@ -6,6 +6,8 @@ from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import tempfile
+
 class OzonParser:
     def __init__(self, query, scroll_count=2, scroll_loops=3):
         self.query = query
@@ -16,9 +18,16 @@ class OzonParser:
 
     def _init_driver(self):
         chrome_options = webdriver.ChromeOptions()
+        chrome_options.add_argument("--headless=new")  # обязательно в Linux
+        chrome_options.add_argument("--no-sandbox")  # нужно в контейнере
+        chrome_options.add_argument("--disable-dev-shm-usage")  # избежание /dev/shm переполнения
+        chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+        chrome_options.add_argument("--disable-infobars")
         chrome_options.add_argument("start-maximized")
         chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         chrome_options.add_experimental_option('useAutomationExtension', False)
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--disable-extensions")
 
         driver = webdriver.Chrome(options=chrome_options)
 
@@ -29,10 +38,12 @@ class OzonParser:
                 webgl_vendor="Intel Inc.",
                 renderer="Intel Iris OpenGL Engine",
                 fix_hairline=True)
+
         return driver
 
     def open_site(self, url="https://www.ozon.ru/"):
         self.driver.get(url)
+
         # Ожидаем появления строки поиска (как индикатор загрузки)
         try:
             WebDriverWait(self.driver, 15).until(
@@ -40,6 +51,8 @@ class OzonParser:
             )
         except Exception as e:
             print(f"Ошибка при загрузке страницы: {e}")
+            self.driver.save_screenshot("/app/ozon_error.png")
+
 
     def search_product(self):
         element_search = self.driver.find_element(By.CSS_SELECTOR, "input[placeholder='Искать на Ozon']")
@@ -67,9 +80,6 @@ class OzonParser:
         for element in elements:
             html = element.get_attribute("innerHTML")
             soup = BeautifulSoup(html, "html.parser")
-
-            # with open("output.txt", "w", encoding="utf-8") as file:
-            #     file.write(soup.prettify())
 
             for product in soup.find_all("div", attrs={"data-index": True}):
                 self._print_product_info(product)

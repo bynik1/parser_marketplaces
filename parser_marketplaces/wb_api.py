@@ -149,8 +149,7 @@ class ProductManager:
     def __init__(self):
         self.api = WildberriesAPI()
 
-    def search_and_display(self):
-        search_query = input("Введите товар для поиска: ")
+    def search_and_display(self, search_query: str):
         response = self.api.search_products(search_query, 5)
         products = self._parse_response(response)
 
