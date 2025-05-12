@@ -19,9 +19,11 @@ class Product:
     supplier_id: Optional[int]
     supplier_rating: Optional[float]
     pics: int
+    first_image_path: Optional[str] = None
 
     @staticmethod
     def from_api_data(data):
+        image_path = f"image/{data.get('id')}/1.jpg" if data.get('pics') > 0 else None
         return Product(
             product_id=data.get('id'),
             name=data.get('name'),
@@ -33,7 +35,8 @@ class Product:
             price_basic=Product._get_price(data, 'basic'),
             supplier_id=data.get('supplierId'),
             supplier_rating=data.get('supplierRating'),
-            pics=data.get('pics', 0)
+            pics=data.get('pics', 0),
+            first_image_path=image_path
         )
 
     @staticmethod
@@ -63,6 +66,7 @@ class Product:
             f"Ссылка на продавца: https://www.wildberries.ru/seller/{self.supplier_id}\n"
             f"Средняя оценка продавца: {self.supplier_rating}\n"
             f"Количество фоток: {self.pics}\n"
+            f"Путь к 1 изображению: {self.first_image_path}\n"
         )
         print(text)
 
@@ -149,7 +153,7 @@ class ProductManager:
     def __init__(self):
         self.api = WildberriesAPI()
 
-    def search_and_display(self, search_query: str):
+    def search_and_display(self, search_query: str, save_image_all=False):
         response = self.api.search_products(search_query, 5)
         products = self._parse_response(response)
 
@@ -157,10 +161,10 @@ class ProductManager:
             print("Товары не найдены.")
             return
 
-        for product in products[:5]:
+        for product in products:
             product.display()
             if product.pics > 0:
-                ImageDownloader.save_images(product.product_id, product.pics)
+                ImageDownloader.save_images(product.product_id, product.pics, save_image_all)
 
         print(f"Количество товаров: {len(products)}")
 
@@ -171,12 +175,14 @@ class ProductManager:
 
 class ImageDownloader:
     @staticmethod
-    def save_images(product_id, product_pics, timeout=10):
+    def save_images(product_id, product_pics, save_image_all, timeout=10):
         _short_id = product_id // 100000
         folder_path = f"image/{product_id}"
         os.makedirs(folder_path, exist_ok=True)
 
         basket = ImageDownloader._determine_basket(_short_id)
+        if not (save_image_all):
+            product_pics = 1
         for i in range(1, product_pics + 1):
             image_url = f"https://basket-{basket}.wbbasket.ru/vol{_short_id}/part{product_id // 1000}/{product_id}/images/big/{i}.webp"
             image_path = f"{folder_path}/{i}.jpg"
@@ -234,13 +240,18 @@ class ImageDownloader:
             return '17'
         elif 2837 <= _short_id <= 3051:
             return '18'
-        elif 3052 <= _short_id <= 3266:
+        elif 3052 <= _short_id <= 3269:
             return '19'
-        elif 3052 <= _short_id <= 3052:
+        elif 3270 <= _short_id <= 3485:
             return '20'
-        else:
+        elif 3486 <= _short_id <= 3701:
             return '21'
+        elif 3702 <= _short_id <= 3917:
+            return '22'
+        else:
+            return '23'
 
 if __name__ == '__main__':
     manager = ProductManager()
-    manager.search_and_display()
+    search_query = input("Введите название товара для поиска: ")
+    manager.search_and_display(search_query)
