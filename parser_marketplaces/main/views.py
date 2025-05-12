@@ -4,7 +4,7 @@ from django.template.loader import render_to_string
 import sys
 from wb_api import ProductManager  # ✅
 from ozon_selenium import OzonParser  # ✅
-
+from django.shortcuts import redirect   
 
 
 
@@ -23,21 +23,36 @@ data_db = [
 def index(request):
     input_value = None
     if request.method == 'POST':
-        input_value = request.POST.get('inputText')
-        print(f"Ввели: {input_value}", file=sys.stdout, flush=True)
+        product_name = request.POST.get('inputText')
+        print(f"Ввели: {product_name}", file=sys.stdout, flush=True)
+        return redirect('product_search', product_name=product_name)
         if input_value:
-            # ProductManager().search_and_display(input_value)
-            OzonParser(input_value).run()
+            ProductManager().search_and_display(input_value)
+            # OzonParser(input_value).run()
+            return redirect(f'/results/?query={input_value}')
+    else:
+        data = {
+            'title': 'Главная страница',
+            'menu': menu,
+            'value': input_value,  # передаём введённое значение (если есть)
+        }
+
+        return render(request, 'main/index.html', context=data)
 
 
+def product_search(request, product_name):
+    # Здесь будет логика поиска и отображения результатов
+    # Вызовите функции парсинга, например:
+    # ozon_results = parse_ozon(product_name) # Используйте вашу функцию парсинга для Ozon
+    wb_results = ProductManager().search_and_display(product_name) # Используйте вашу функцию парсинга для Wildberries
 
-    data = {
-        'title': 'Главная страница',
-        'menu': menu,
-        'value': input_value,  # передаём введённое значение (если есть)
+    # Объедините или обработайте результаты по вашему усмотрению
+    search_results = {
+        # 'ozon': ozon_results,
+        'wb': wb_results,
     }
 
-    return render(request, 'main/index.html', context=data)
+    return render(request, 'main/product_results.html', {'product_name': product_name, 'results': search_results})
 
 
 def page_not_found(request, exception):

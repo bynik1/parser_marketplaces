@@ -1,0 +1,34 @@
+<!-- parser_marketplaces/main/templates/main/product_results.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Результаты поиска для "{{ product_name }}"</title>
+</head>
+<body>
+    <h1>Результаты поиска для "{{ product_name }}"</h1>
+
+    <h2>Ozon</h2>
+    {% if results.ozon %}
+        <ul>
+            {% for item in results.ozon %}
+                <li>{{ item.name }} - {{ item.price }}</li> {# Адаптируйте под структуру ваших результатов #}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Результаты на Ozon не найдены.</p>
+    {% endif %}
+
+    <h2>Wildberries</h2>
+    {% if results.wb %}
+        <ul>
+            {% for item in results.wb %}
+                <li>{{ item.name }} - {{ item.price }}</li> {# Адаптируйте под структуру ваших результатов #}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Результаты на Wildberries не найдены.</p>
+    {% endif %}
+
+    <p><a href="{% url 'home' %}">Вернуться к поиску</a></p>
+</body>
+</html>
