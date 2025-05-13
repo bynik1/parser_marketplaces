@@ -92,7 +92,7 @@ def search(request):
 def about(request):
     return render(request, 'main/about.html', {'title': 'О сайте', 'menu': menu})
 
-
+@login_required # ✅
 def history(request):
     data = {
         'title': 'История поиска',
