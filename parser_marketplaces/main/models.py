@@ -31,6 +31,6 @@ class Product_WB(models.Model):
     pics = models.IntegerField(default=0)
     first_image_path=models.CharField(max_length=510, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-
+   
     def __str__(self):
         return f"{self.name} (ID: {self.product_id})"
