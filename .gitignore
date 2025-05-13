@@ -4,7 +4,7 @@ ozon_api/
 image/
 images/
 test/
-
+yandex/
 # Python
 __pycache__/
 *.py[cod]

@@ -6,18 +6,18 @@ from wb_api import ProductManager  # ✅
 from ozon_selenium import OzonParser  # ✅
 from django.shortcuts import redirect   
 from .models import Product_WB
-
-
-menu = [{'title': "О сайте", 'url_name': 'about'},
-        {'title': "История", 'url_name': 'history'},
-        # {'title': "Войти", 'url_name': 'login'}
-]
+from .utils import menu
+from django.contrib.auth.decorators import login_required # ✅
 
 data_db = [
     {'id': 1, 'title': 'Анджелина Джоли', 'content': 'Биография Анджелины Джоли', 'is_published': True},
     {'id': 2, 'title': 'Марго Робби', 'content': 'Биография Марго Робби', 'is_published': False},
     {'id': 3, 'title': 'Джулия Робертс', 'content': 'Биография Джулия Робертс', 'is_published': True},
 ]
+
+
+def login(request):
+    return HttpResponse("Авторизация")
 
 def index(request):
     product_name = None
@@ -38,7 +38,7 @@ def index(request):
 
     return render(request, 'main/index.html', context=data)
 
-
+@login_required # ✅
 def product_search(request, product_name):
     print(f"Выполняется поиск и сохранение для товара: {product_name}", file=sys.stdout, flush=True)
     wb_results = ProductManager().search_and_display(product_name) # Возвращает список объектов Product
