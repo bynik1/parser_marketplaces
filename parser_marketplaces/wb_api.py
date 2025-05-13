@@ -167,7 +167,8 @@ class ProductManager:
                 ImageDownloader.save_images(product.product_id, product.pics, save_image_all)
 
         print(f"Количество товаров: {len(products)}")
-
+        return products
+    
     def _parse_response(self, response):
         products_raw = response.get('data', {}).get('products', [])
         return [Product.from_api_data(data) for data in products_raw]
