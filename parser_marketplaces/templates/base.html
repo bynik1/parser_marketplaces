@@ -31,7 +31,11 @@
                 </ul>
                 <div class="d-flex">
                     {% if user.is_authenticated %}
-                        <span class="navbar-text me-2">{{ user.username }} | </span><a href="{% url 'users:logout' %}" class="btn btn-outline-danger">Выйти</a>
+                        <span class="navbar-text me-2">{{ user.username }} | </span>
+                        <form method="post" action="{% url 'users:logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger">Выйти</button>
+                        </form>
                     {% else %}
                         <a href="{% url 'users:login' %}" class="btn btn-outline-primary me-2">Войти</a>
                         <a href="#" class="btn btn-outline-secondary">Регистрация</a>
