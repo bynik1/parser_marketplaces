@@ -5,13 +5,12 @@ import sys
 from wb_api import ProductManager  # ✅
 from ozon_selenium import OzonParser  # ✅
 from django.shortcuts import redirect   
-
-
+from .models import Product_WB
 
 
 menu = [{'title': "О сайте", 'url_name': 'about'},
         {'title': "История", 'url_name': 'history'},
-        {'title': "Войти", 'url_name': 'login'}
+        # {'title': "Войти", 'url_name': 'login'}
 ]
 
 data_db = [
@@ -21,38 +20,65 @@ data_db = [
 ]
 
 def index(request):
-    input_value = None
+    product_name = None
     if request.method == 'POST':
         product_name = request.POST.get('inputText')
         print(f"Ввели: {product_name}", file=sys.stdout, flush=True)
-        return redirect('product_search', product_name=product_name)
-        if input_value:
-            ProductManager().search_and_display(input_value)
-            # OzonParser(input_value).run()
-            return redirect(f'/results/?query={input_value}')
-    else:
-        data = {
-            'title': 'Главная страница',
-            'menu': menu,
-            'value': input_value,  # передаём введённое значение (если есть)
-        }
+        # if product_name:
+        #     ProductManager().search_and_display(product_name)
+        #     # OzonParser(input_value).run()
+        #     # return redirect(f'/results/?query={input_value}')
+        #     return redirect('product_search', product_name=product_name)
 
-        return render(request, 'main/index.html', context=data)
+    data = {
+        'title': 'Главная страница',
+        'menu': menu,
+        'value': product_name,  # передаём введённое значение (если есть)
+    }
+
+    return render(request, 'main/index.html', context=data)
 
 
 def product_search(request, product_name):
-    # Здесь будет логика поиска и отображения результатов
-    # Вызовите функции парсинга, например:
-    # ozon_results = parse_ozon(product_name) # Используйте вашу функцию парсинга для Ozon
-    wb_results = ProductManager().search_and_display(product_name) # Используйте вашу функцию парсинга для Wildberries
+    print(f"Выполняется поиск и сохранение для товара: {product_name}", file=sys.stdout, flush=True)
+    wb_results = ProductManager().search_and_display(product_name) # Возвращает список объектов Product
 
-    # Объедините или обработайте результаты по вашему усмотрению
-    search_results = {
-        # 'ozon': ozon_results,
-        'wb': wb_results,
+    if wb_results:
+        for product_object in wb_results:
+            # Создаем и сохраняем объект модели Product_WB
+            # Используем атрибуты объекта Product, возвращаемого search_and_display
+            try:
+                Product_WB.objects.create(
+                    product_id=product_object.product_id,
+                    name=product_object.name,
+                    brand=product_object.brand,
+                    review_rating=product_object.review_rating,
+                    feedbacks=product_object.feedbacks,
+                    color=product_object.color,
+                    price_product=product_object.price_product,
+                    price_basic=product_object.price_basic,
+                    supplier_id=product_object.supplier_id,
+                    supplier_rating=product_object.supplier_rating,
+                    pics=product_object.pics,
+                    first_image_path=product_object.first_image_path,
+                    # created_at заполняется автоматически
+                )
+            except Exception as e:
+                print(f"Ошибка при сохранении объекта Product_WB: {e}", file=sys.stdout, flush=True)
+                # Обработайте ошибку сохранения, например, если product_id уже существует (UniqueViolation)
+                pass # Или добавьте более детальную обработку
+
+    # Всегда извлекаем все результаты для данного товара из базы данных для отображения
+    display_results = Product_WB.objects.filter(name__icontains=product_name)
+
+    data = {
+        'title': f'Результаты поиска для "{product_name}"',
+        'product_name': product_name,
+        'wb_results': display_results, # Передаем результаты из базы
+        'menu': menu,
     }
 
-    return render(request, 'main/product_results.html', {'product_name': product_name, 'results': search_results})
+    return render(request, 'main/product_results.html', context=data) # Используем новый шаблон
 
 
 def page_not_found(request, exception):
@@ -78,6 +104,3 @@ def history(request):
 
 def show_request(request, request_id):
     return HttpResponse(f"Отображение статьи с id = {request_id}")
-
-def login(request):
-    return render(request, 'main/index.html')
