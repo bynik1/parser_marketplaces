@@ -13,8 +13,10 @@ services:
       env_file:
         - .env.docker
       volumes:
-        - .:/app
+        - ./parser_marketplaces:/app/parser_marketplaces
         - ./media:/app/media
+        # - ./entrypoint.sh:/entrypoint.sh
+        # - ./wait-for-it.sh:/wait-for-it.sh
       depends_on:
         - db
       ports:

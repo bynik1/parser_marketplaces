@@ -2,8 +2,7 @@ import datetime
 
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, PasswordChangeForm
-
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm, PasswordChangeForm  
 
 class LoginUserForm(AuthenticationForm):
     username = forms.CharField(label="Логин",
@@ -41,6 +40,8 @@ class RegisterUserForm(UserCreationForm):
             raise forms.ValidationError("Такой E-mail уже существует!")
         return email
 
+class CustomFileInput(forms.ClearableFileInput):
+    template_name = 'users/widgets/custom_file_input.html'
 
 class ProfileUserForm(forms.ModelForm):
     username = forms.CharField(disabled=True, label='Логин', widget=forms.TextInput(attrs={'class': 'form-input'}))
@@ -58,6 +59,7 @@ class ProfileUserForm(forms.ModelForm):
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-input'}),
             'last_name': forms.TextInput(attrs={'class': 'form-input'}),
+            'photo': CustomFileInput,
         }
 
 

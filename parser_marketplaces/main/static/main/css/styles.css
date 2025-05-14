@@ -429,3 +429,15 @@ ul.lang-list li a:hover {color: #fdc073;}
     font-size: 16px;
     cursor: pointer;
 }
+
+/* действует только внутри нашего виджета */
+.photo-widget img,
+.photo-widget input[type="file"] {
+	display: block;        /* каждый элемент с новой строки */
+}
+
+.photo-widget img {        /* небольшой отступ снизу */
+	margin-bottom: 8px;
+	max-width: 250px;      /* при желании ограничьте размер */
+	height: auto;
+}
