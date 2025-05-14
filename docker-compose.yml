@@ -14,6 +14,7 @@ services:
         - .env.docker
       volumes:
         - .:/app
+        - ./media:/app/media
       depends_on:
         - db
       ports:
