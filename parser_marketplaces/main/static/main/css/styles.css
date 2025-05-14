@@ -385,25 +385,47 @@ ul.lang-list li a:hover {color: #fdc073;}
 	text-decoration: underline;
 	color: #aaa;
 }
-
-.form-input {
-    width: 300px;
-    font-size: 16px;
+.form-wrapper {
+    max-width: 500px;      /* ширина всей формы */
+    margin: 40px auto;     /* центр + отступ сверху */
+    padding: 20px 25px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.05);
+    background: #fff;
 }
 
-.form-label {
+.form-row {               /* строка: подпись + поле */
+    margin-bottom: 14px;
+}
+
+.form-label {             /* подпись */
     display: inline-block;
-    min-width: 150px;
+    width: 115px;         /* фикс — все выстроятся ровно */
+    text-align: left;    /* текст ближе к полю */
+    margin-right: 12px;
     vertical-align: top;
+    font-weight: 600;
 }
 
-.form-error ul {
-    list-style: none;
-    padding: 0;
+.form-input {             /* само поле */
+    display: inline-block;
+    width: 260px;         /* одинаковая длина */
+    padding: 6px 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+.form-error {             /* сообщения об ошибках */
     color: #CC0000;
+    font-size: 14px;
+    margin-left: 127px;   /* = width label + margin-right */
 }
 
 .form-button {
-    min-width: 200px;
+    width: 260px;         /* как поле ввода */
+    margin-left: 127px;   /* выравниваем по полям */
+    padding: 8px 10px;
     font-size: 16px;
+    cursor: pointer;
 }
