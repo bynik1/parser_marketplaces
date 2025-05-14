@@ -31,7 +31,7 @@
                 </ul>
                 <div class="d-flex">
                     {% if user.is_authenticated %}
-                        <span class="navbar-text me-2">{{ user.username }} | </span>
+                        <span class="navbar-text me-2"><a href="{% url 'users:profile' %}">{{user.username}}</a> | </span>
                         <form method="post" action="{% url 'users:logout' %}">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-outline-danger">Выйти</button>
