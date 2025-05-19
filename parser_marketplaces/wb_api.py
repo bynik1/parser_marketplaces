@@ -178,7 +178,7 @@ class ImageDownloader:
     @staticmethod
     def save_images(product_id, product_pics, save_image_all, timeout=10):
         _short_id = product_id // 100000
-        folder_path = f"image/{product_id}"
+        folder_path = os.path.join("image", str(product_id))
         os.makedirs(folder_path, exist_ok=True)
 
         basket = ImageDownloader._determine_basket(_short_id)

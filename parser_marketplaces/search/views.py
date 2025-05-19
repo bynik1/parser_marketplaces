@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 from wb_api import ProductManager
-from .models import Product_WB, Product_Ozon
+from .models import ProductWB, ProductOzon
 from main.utils import menu
 from django.contrib.auth.decorators import login_required
 
@@ -32,7 +32,7 @@ def product_search(request, product_name):
 
     if wb_results:
         for product_object in wb_results:
-            product, created = Product_WB.objects.update_or_create(
+            product, created = ProductWB.objects.update_or_create(
                 product_id=product_object.product_id,
                 defaults={
                     'name': product_object.name,
@@ -48,7 +48,7 @@ def product_search(request, product_name):
                     'first_image_path': product_object.first_image_path,
                 }
             )
-    display_results = Product_WB.objects.filter(name__icontains=product_name)
+    display_results = ProductWB.objects.filter(name__icontains=product_name)
 
     data = {
         'title': f'Результаты поиска для "{product_name}"',

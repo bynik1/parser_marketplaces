@@ -5,6 +5,7 @@ image/
 images/
 test/
 yandex/
+migrations/
 # Python
 __pycache__/
 *.py[cod]
