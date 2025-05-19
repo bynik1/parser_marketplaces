@@ -1,17 +1,6 @@
 {% load static %}
-<style>
-  /* действует только внутри нашего виджета */
-  .photo-widget img,
-  .photo-widget input[type="file"] {
-      display: block;        /* каждый элемент с новой строки */
-  }
 
-  .photo-widget img {        /* небольшой отступ снизу */
-      margin-bottom: 8px;
-      max-width: 250px;      /* при желании ограничьте размер */
-      height: auto;
-  }
-</style>
+
 
 <div class="photo-widget">
     {% if widget.value %}
