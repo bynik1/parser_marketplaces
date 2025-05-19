@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from main.views import page_not_found
+from main.views import page_not_found # Обновленный импорт для 404 страницы
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -24,8 +24,10 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('main.urls')),
+    path('', include('main.urls')), # Включаем URL-маршруты из приложения main для главной страницы
+    path('search/', include('search.urls', namespace='search')), # Включаем URL-маршруты из приложения search с пространством имен
     path('users/', include('users.urls', namespace='users')),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 
 handler404 = page_not_found
