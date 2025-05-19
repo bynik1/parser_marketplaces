@@ -35,7 +35,6 @@ def history(request):
         'menu': menu
     }
     return render(request, 'main/history.html', context=data)
-    # return HttpResponse(f"Запрос номер: {request_id}",)
 
 def show_request(request, request_id):
     return HttpResponse(f"Отображение статьи с id = {request_id}")

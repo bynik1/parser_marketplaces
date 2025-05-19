@@ -21,7 +21,7 @@ class ProductOzon(models.Model):
 class ProductWB(models.Model):
     product_id = models.BigIntegerField(unique=True) # ID товара, уникальный
     name = models.CharField(max_length=255)
-    product_id = models.BigIntegerField(unique=True, help_text="Unique product identifier")
+    brand = models.CharField(max_length=100, blank=True, null=True)
     review_rating = models.FloatField(blank=True, null=True, help_text="Product rating")
     feedbacks = models.IntegerField(blank=True, null=True, help_text="Number of reviews")
     color = models.CharField(max_length=50, blank=True, null=True)
