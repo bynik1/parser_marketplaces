@@ -11,56 +11,75 @@ import logging
 logger = logging.getLogger(__name__)
 
 def search_page(request):
-    product_name = None
+    product_name = request.GET.get('inputText', '')  # Получаем значение поиска из GET, если оно есть
+    
+    # Проверяем, был ли запрос через POST (для поиска)
     if request.method == 'POST':
         product_name = request.POST.get('inputText')
         logger.debug(f"Searching for: {product_name}")
         if product_name:
-            return redirect(reverse('search:product_search', kwargs={'product_name': product_name}))
+            # При поиске добавляем введенное значение и текущие параметры сортировки в URL
+            return redirect(reverse('search:product_search', kwargs={'product_name': product_name}) + f"?inputText={product_name}&sort={request.GET.get('sort', 0)}")
 
+    # Отправляем параметры для шаблона
     data = {
         'title': 'Главная страница',
         'menu': menu,
-        'value': product_name,
+        'value': product_name,  # Введенное значение в поле поиска
     }
     return render(request, 'search/search_page.html', context=data)
+
 
 @login_required
 def product_search(request, product_name):
     logger.info(f"Выполняется поиск и сохранение для товара: {product_name}")
-    # Получаем или создаём маркетплейс (пример: Wildberries)
-    marketplace, _ = Marketplace.objects.get_or_create(name="Wildberries")
-
+    
+    # Получаем или создаем маркетплейс (например, Wildberries)
+    marketplace = get_object_or_404(Marketplace, name="Wildberries")
+    
+    # Получаем сортировку из GET параметров
+    try:
+     sort_index = int(request.GET.get('sort', 0))
+    except (ValueError, TypeError):
+        sort_index = 0  # Default to popular sorting
+        logger.warning(f"Invalid sort parameter provided: {request.GET.get('sort')}")
+    
     # Поиск товаров через внешний менеджер
-    wb_results = ProductManager().search_and_display(product_name)  # Список объектов Product-like
+    wb_results = ProductManager().search_and_display(product_name, sort_index)
 
-    if wb_results:
-        for product_object in wb_results:
-            product, created = Product.objects.update_or_create(
-                product_id=product_object.product_id,
-                marketplace=marketplace,
-                defaults={
-                    'name': product_object.name,
-                    'brand': product_object.brand,
-                    'review_rating': product_object.review_rating,
-                    'feedbacks': product_object.feedbacks,
-                    'color': product_object.color,
-                    'price_product': product_object.price_product,
-                    'price_basic': product_object.price_basic,
-                    'supplier_id': product_object.supplier_id,
-                    'supplier_rating': product_object.supplier_rating,
-                    'pics': product_object.pics,
-                    'first_image_path': getattr(product_object, 'first_image_path', None),
-                }
-            )
-
-    # Создаём SearchQuery для пользователя
+    # Создаем новый запрос SearchQuery
     search_query = SearchQuery.objects.create(
         user=request.user,
         query_text=product_name
     )
-    search_query.marketplaces.add(marketplace)
+    search_query.marketplaces.add(marketplace)  # Добавляем маркетплейс к запросу
 
+    # Обработка результатов поиска товаров
+    if wb_results:
+        for product_object in wb_results:
+# Создаем новый товар для каждого найденного товара
+            try:
+                Product.objects.create(
+                    product_id=product_object.product_id,
+                    marketplace=marketplace,
+                    searchquery=search_query,  # Связываем с запросом
+                    name=product_object.name,
+                    brand=product_object.brand,
+                    review_rating=product_object.review_rating,
+                    feedbacks=product_object.feedbacks,
+                    color=product_object.color,
+                    price_product=product_object.price_product,
+                    price_basic=product_object.price_basic,
+                    supplier_id=product_object.supplier_id,
+                    supplier_rating=product_object.supplier_rating,
+                    pics=product_object.pics,
+                    first_image_path=getattr(product_object, 'first_image_path', None),
+                )
+                logger.info(f"Товар добавлен: {product_object.name}")
+            except Exception as e:
+                logger.error(f"Ошибка при добавлении товара {product_object.name}: {e}")
+
+    # Получаем все товары для отображения
     display_results = Product.objects.filter(marketplace=marketplace, name__icontains=product_name)
 
     data = {
@@ -70,7 +89,6 @@ def product_search(request, product_name):
         'wb_results': display_results,
         'menu': menu,
     }
-    return render(request, 'search/product_results.html', context=data)
 
-# @login_required
-# def
+    # Отправляем результаты на страницу
+    return render(request, 'search/product_results.html', context=data)

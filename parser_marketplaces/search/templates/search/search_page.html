@@ -1,16 +1,29 @@
 {% extends 'base.html' %}
+
 {% block content %} 
 <h1>{{ title }}</h1>
-<!-- {% if user.is_authenticated %} -->
-    <form method="post">
-        {% csrf_token %}
-        <label for="inputText">Введите значение:</label>
-        <input type="text" id="inputText" name="inputText" placeholder="Введите название товара">
-        <button type="submit">Найти</button>
-    </form>
 
-    {% if value %}
-        <p>Вы ввели: <strong>{{ value }}</strong></p>
-    {% endif %}
-<!-- {% endif %} -->
+<!-- Форма сортировки товаров -->
+<form method="get" id="sort-form">
+    <label for="sort">Сортировать по:</label>
+    <select name="sort" id="sort" onchange="this.form.submit()">
+        <option value="0" {% if request.GET.sort == "0" %}selected{% endif %}>Популярности</option>
+        <option value="1" {% if request.GET.sort == "1" %}selected{% endif %}>Рейтингу</option>
+        <option value="2" {% if request.GET.sort == "2" %}selected{% endif %}>Цене ↑</option>
+        <option value="3" {% if request.GET.sort == "3" %}selected{% endif %}>Цене ↓</option>
+    </select>
+</form>
+
+<!-- Форма для поиска товара по названию -->
+<form method="post">
+    {% csrf_token %}
+    <label for="inputText">Введите значение:</label>
+    <input type="text" id="inputText" name="inputText" placeholder="Введите название товара" value="{{ value }}">
+    <button type="submit">Найти</button>
+</form>
+
+{% if value %}
+    <p>Вы ввели: <strong>{{ value }}</strong></p>
+{% endif %}
+
 {% endblock %}

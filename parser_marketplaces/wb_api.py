@@ -72,7 +72,7 @@ class Product:
 
 class WildberriesAPI:
     BASE_URL = 'https://search.wb.ru/exactmatch/ru/male/v13/search'
-    list_sorting = ["popular", "rate", "priceup",  "pricedown", "newly", "benefit"]
+    list_sorting = ["popular", "rate", "priceup",  "pricedown"]
 
     def __init__(self):
         self.headers = {
@@ -153,25 +153,28 @@ class ProductManager:
     def __init__(self):
         self.api = WildberriesAPI()
 
-    def search_and_display(self, search_query: str, save_image_all=False):
-        response = self.api.search_products(search_query, 5)
-        products = self._parse_response(response)
+    def search_and_display(self, search_query: str, search_sort=0, save_image_all=False):
+        # Validate sort parameter
+        if not isinstance(search_sort, int) or search_sort < 0 or search_sort >= len(self.api.list_sorting):
+            search_sort = 0  # Default to popular sorting
+            response = self.api.search_products(search_query, search_sort)
+            products = self._parse_response(response)
 
-        if not products:
-            print("Товары не найдены.")
-            return
+            if not products:
+                print("Товары не найдены.")
+                return
 
-        # for product in products:
-        #     product.display()
-        #     if product.pics > 0:
-        #         ImageDownloader.save_images(product.product_id, product.pics, save_image_all)
+            # for product in products:
+            #     product.display()
+            #     if product.pics > 0:
+            #         ImageDownloader.save_images(product.product_id, product.pics, save_image_all)
 
-        print(f"Количество товаров: {len(products)}")
-        return products
-    
-    def _parse_response(self, response):
-        products_raw = response.get('data', {}).get('products', [])
-        return [Product.from_api_data(data) for data in products_raw]
+            print(f"Количество товаров: {len(products)}")
+            return products
+        
+        def _parse_response(self, response):
+            products_raw = response.get('data', {}).get('products', [])
+            return [Product.from_api_data(data) for data in products_raw]
 
 
 class ImageDownloader:

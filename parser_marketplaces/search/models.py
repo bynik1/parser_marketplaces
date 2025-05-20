@@ -41,7 +41,7 @@ class Product(models.Model):
     supplier_rating = models.FloatField(blank=True, null=True)
     pics = models.IntegerField(default=0)
     first_image_path = models.CharField(max_length=510, blank=True, null=True)
-
+    searchquery = models.ForeignKey('SearchQuery', on_delete=models.SET_NULL, related_name='products', null=True, blank=True)
     def __str__(self):
         return f"{self.name} ({self.marketplace.name})"
 
