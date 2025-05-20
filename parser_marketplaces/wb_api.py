@@ -161,10 +161,10 @@ class ProductManager:
             print("Товары не найдены.")
             return
 
-        for product in products:
-            product.display()
-            if product.pics > 0:
-                ImageDownloader.save_images(product.product_id, product.pics, save_image_all)
+        # for product in products:
+        #     product.display()
+        #     if product.pics > 0:
+        #         ImageDownloader.save_images(product.product_id, product.pics, save_image_all)
 
         print(f"Количество товаров: {len(products)}")
         return products

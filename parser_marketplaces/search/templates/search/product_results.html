@@ -1,34 +1,22 @@
-<!-- parser_marketplaces/main/templates/main/product_results.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Результаты поиска для "{{ product_name }}"</title>
-</head>
-<body>
-    <h1>Результаты поиска для "{{ product_name }}"</h1>
+{% extends 'base.html' %}
+{% block content %} 
+<h1>{{ title }}</h1>
+<h2>Результаты на {{ marketplace.name }}</h2>
 
-    <h2>Ozon</h2>
-    {% if results.ozon %}
-        <ul>
- {% for item in results.ozon %}
-                <li>{{ item.name }} - {{ item.price }}</li>
- {% endfor %}
-        </ul>
-    {% else %}
-        <p>Результаты на Ozon не найдены.</p>
- {% endif %}
+{% if wb_results %}
+    <ul>
+    {% for product in wb_results %}
+        <li>
+            <strong>{{ product.name }}</strong>
+            {% if product.brand %} ({{ product.brand }}){% endif %}
+                — {{ product.price_product|floatformat:0 }}&nbsp;₽ руб.
+            {% if product.review_rating %} | Рейтинг: {{ product.review_rating }}{% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>Товары не найдены.</p>
+{% endif %}
 
-     <h2>Wildberries</h2>
- {% if results.wb %}
-        <ul>
- {% for item in results.wb %}
-                <li>{{ item.name }} - {{ item.price }}</li>
- {% endfor %}
-        </ul>
- {% else %}
-        <p>Результаты на Wildberries не найдены.</p>
- {% endif %}
-
-    <p><a href="{% url 'home' %}">Вернуться к поиску</a></p>
-</body>
-</html>
+<a href="{% url 'search:search_page' %}">Вернуться к поиску</a>
+{% endblock %}
