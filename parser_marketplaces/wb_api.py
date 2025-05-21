@@ -6,7 +6,6 @@ import os
 import time
 import logging
 import json
-import logging
 from urllib.parse import urlencode
 
 logging.basicConfig(
@@ -143,7 +142,6 @@ class WildberriesAPI:
         }
         # Логируем сформированный URL для отладки
         logger.info(f"Request URL: {self.BASE_URL}?{urlencode(params)}")
-        print(f"Request URL: {self.BASE_URL}?{urlencode(params)}")
         response = requests.get(self.BASE_URL, headers=self.headers, params=params)
         try:
             return response.json()
