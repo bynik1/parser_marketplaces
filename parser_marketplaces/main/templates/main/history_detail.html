@@ -1,29 +1,31 @@
 {% extends 'base.html' %}
 {% block content %} 
 
-<h1>{{ title }}</h1>
-    <ul>
-    {% for product in products %}
-        <li>
-            <!-- Картинка -->
-            <img src="/media/image/{{ product.product_id }}/1.jpg" 
-                 alt="{{ product.name }}" 
-                 style="width: 100px; height: auto; vertical-align: top;">
-            
-            <!-- Ссылка на товар -->
-            <strong>
-                <a href="https://www.wildberries.ru/catalog/{{ product.product_id }}/detail.aspx" 
-                   target="_blank" rel="noopener noreferrer">
-                    {{ product.name }}
-                </a>
-            </strong>
-            
-            {% if product.brand %} ({{ product.brand }}){% endif %}
-            — {{ product.price_product|floatformat:0 }}&nbsp;₽ руб.
-            {% if product.review_rating %} | Рейтинг: {{ product.review_rating }}{% endif %}
-        </li>
-    {% endfor %}
+<div class="container my-4">
+    <h1 class="mb-4">{{ title }}</h1>
+    {% if products %}
+        <ul class="list-group">
+        {% for product in products %}
+            <li class="list-group-item">
+                <div class="d-flex">
+                    <img src="/media/image/{{ product.product_id }}/1.jpg" alt="{{ product.name }}" class="me-3 zoomable" style="width: 100px; height: auto;">
+                    <div>
+                        <a href="https://www.wildberries.ru/catalog/{{ product.product_id }}/detail.aspx" target="_blank" rel="noopener noreferrer" class="fw-bold">{{ product.name }}</a>
+                        {% if product.brand %}<span class="text-muted"> ({{ product.brand }})</span>{% endif %}
+                        <div>
+                            {{ product.price_product|floatformat:0 }}&nbsp;₽
+                            {% if product.review_rating %}| Рейтинг: {{ product.review_rating }}{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">Нет данных.</p>
+    {% endif %}
 
-<a href="{% url 'history' %}">Вернуться к Истории поиска</a>
+    <a href="{% url 'history' %}" class="btn btn-link mt-3">&larr; Вернуться к Истории поиска</a>
+</div>
 
 {% endblock %}

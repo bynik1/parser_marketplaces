@@ -1,18 +1,25 @@
 {% extends 'base.html' %}
-{% block content %} 
-<h1>{{ title }}</h1>
+{% block content %}
+<div class="container my-4">
+    <div class="container my-4">
+    <h1 class="mb-4">{{ title }}</h1>
 
-<ul>
-{% for request in requests %}
-    <li>
-        <strong>{{ request.id }}</strong>
-        <a href="{% url 'search_history_detail' request.id %}">
-            {{ request.query_text }}
-        </a>
-        <small>({{ request.created_at|date:"d.m.Y H:i" }})</small>
-    </li>
-{% empty %}
-    <li>История поиска пуста</li>
-{% endfor %}
-</ul>
-{% endblock %}
+    {% if requests %}
+        <ul class="list-group">
+        {% for request in requests %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <a href="{% url 'search_history_detail' request.id %}" class="fw-bold">
+                        {{ request.query_text }}
+                    </a>
+                    <div class="text-muted small">{{ request.created_at|date:"d.m.Y H:i" }}</div>
+                </div>
+                <span class="badge bg-secondary">{{ request.id }}</span>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p class="text-muted">История поиска пуста</p>
+    {% endif %}
+</div>
+ {% endblock %}
