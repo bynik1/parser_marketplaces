@@ -83,7 +83,7 @@ class Product:
 
 class WildberriesAPI:
     BASE_URL = 'https://search.wb.ru/exactmatch/ru/male/v13/search'
-    list_sorting = ["popular", "rate", "priceup",  "pricedown"]
+    # list_sorting = ["popular", "rate", "priceup",  "pricedown"]
 
     def __init__(self):
         self.headers = {
@@ -125,7 +125,7 @@ class WildberriesAPI:
     def search_products(self, query, sort):
         self.to_url_safe_format(query)
         params = {
-            'ab_testing': 'false',
+            'ab_old_spell': 'spell',
             'appType': '1',
             'curr': 'rub',
             'dest': '-364776',
@@ -134,8 +134,8 @@ class WildberriesAPI:
             'page': '1',
             'query': query,
             'resultset': 'catalog',
-            'sort': self.list_sorting[sort],
-            'spp': '100',
+            'sort': sort,
+            'spp': '30',
             'suppressSpellcheck': 'false',
             'uclusters': '3',
             'uiv': '0'
@@ -166,10 +166,9 @@ class ProductManager:
     def __init__(self):
         self.api = WildberriesAPI()
 
-    def search_and_display(self, search_query: str, search_sort=0, save_image_all=False):
+    def search_and_display(self, search_query: str, search_sort, save_image_all=False):
         # Validate sort parameter
         # if not isinstance(search_sort, int) or search_sort < 0 or search_sort >= len(self.api.list_sorting):
-        search_sort = 0  # Default to popular sorting
         response = self.api.search_products(search_query, search_sort)
         products = self._parse_response(response)
 

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<h2>Поиск товаров</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    
+    <div class="form-group">
+        <label for="sort">Сортировать по:</label>
+        <select name="sort" id="sort" >
+            {% for option in sort_options %}
+                <option value="{{ option.value }}" {% if option.value == current_sort %}selected{% endif %}>
+                    {{ option.label }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Найти</button>
+</form>
+
+{% endblock %}
