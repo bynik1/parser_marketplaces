@@ -19,7 +19,7 @@ def search_page(request):
         logger.debug(f"Searching for: {product_name}")
         if product_name:
             # При поиске добавляем введенное значение и текущие параметры сортировки в URL
-            return redirect(reverse('search:product_search', kwargs={'product_name': product_name}) + f"?inputText={product_name}&sort={request.GET.get('sort', 0)}")
+            return redirect(reverse('search:product_search', kwargs={'product_name': product_name}))
 
     # Отправляем параметры для шаблона
     data = {
@@ -39,13 +39,13 @@ def product_search(request, product_name):
     
     # Получаем сортировку из GET параметров
     try:
-     sort_index = int(request.GET.get('sort', 0))
+        search_sort = int(request.GET.get('sort', 0))
     except (ValueError, TypeError):
-        sort_index = 0  # Default to popular sorting
+        search_sort = 0  # Default to popular sorting
         logger.warning(f"Invalid sort parameter provided: {request.GET.get('sort')}")
     
     # Поиск товаров через внешний менеджер
-    wb_results = ProductManager().search_and_display(product_name, sort_index)
+    wb_results = ProductManager().search_and_display(product_name, search_sort)
 
     # Создаем новый запрос SearchQuery
     search_query = SearchQuery.objects.create(
@@ -80,7 +80,7 @@ def product_search(request, product_name):
                 logger.error(f"Ошибка при добавлении товара {product_object.name}: {e}")
 
     # Получаем все товары для отображения
-    display_results = Product.objects.filter(marketplace=marketplace, name__icontains=product_name)
+    display_results = Product.objects.filter(searchquery=search_query)
 
     data = {
         'title': f'Результаты поиска для "{product_name}" на {marketplace.name}',
@@ -92,3 +92,5 @@ def product_search(request, product_name):
 
     # Отправляем результаты на страницу
     return render(request, 'search/product_results.html', context=data)
+
+

@@ -5,6 +5,17 @@ import os
 import time
 import logging
 import json
+import logging
+from urllib.parse import urlencode
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[logging.StreamHandler()]
+)
+
+logger = logging.getLogger(__name__)
+logger.info("Приложение запущено внутри контейнера")
 
 @dataclass
 class Product:
@@ -124,12 +135,14 @@ class WildberriesAPI:
             'query': query,
             'resultset': 'catalog',
             'sort': self.list_sorting[sort],
-            'spp': '30',
+            'spp': '100',
             'suppressSpellcheck': 'false',
             'uclusters': '3',
             'uiv': '0'
         }
-    
+        # Логируем сформированный URL для отладки
+        logger.info(f"Request URL: {self.BASE_URL}?{urlencode(params)}")
+        print(f"Request URL: {self.BASE_URL}?{urlencode(params)}")
         response = requests.get(self.BASE_URL, headers=self.headers, params=params)
         try:
             return response.json()
@@ -155,26 +168,26 @@ class ProductManager:
 
     def search_and_display(self, search_query: str, search_sort=0, save_image_all=False):
         # Validate sort parameter
-        if not isinstance(search_sort, int) or search_sort < 0 or search_sort >= len(self.api.list_sorting):
-            search_sort = 0  # Default to popular sorting
-            response = self.api.search_products(search_query, search_sort)
-            products = self._parse_response(response)
+        # if not isinstance(search_sort, int) or search_sort < 0 or search_sort >= len(self.api.list_sorting):
+        search_sort = 0  # Default to popular sorting
+        response = self.api.search_products(search_query, search_sort)
+        products = self._parse_response(response)
 
-            if not products:
-                print("Товары не найдены.")
-                return
+        if not products:
+            print("Товары не найдены.")
+            return
 
-            # for product in products:
-            #     product.display()
-            #     if product.pics > 0:
-            #         ImageDownloader.save_images(product.product_id, product.pics, save_image_all)
+        # for product in products:
+        #     product.display()
+        #     if product.pics > 0:
+        #         ImageDownloader.save_images(product.product_id, product.pics, save_image_all)
 
-            print(f"Количество товаров: {len(products)}")
-            return products
+        print(f"Количество товаров: {len(products)}")
+        return products
         
-        def _parse_response(self, response):
-            products_raw = response.get('data', {}).get('products', [])
-            return [Product.from_api_data(data) for data in products_raw]
+    def _parse_response(self, response):
+        products_raw = response.get('data', {}).get('products', [])
+        return [Product.from_api_data(data) for data in products_raw]
 
 
 class ImageDownloader:

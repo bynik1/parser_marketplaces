@@ -25,7 +25,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('main.urls')), # Включаем URL-маршруты из приложения main для главной страницы
-    path('search/', include('search.urls', namespace='search')), # Включаем URL-маршруты из приложения search с пространством имен
+    path('', include('search.urls', namespace='search')), # Включаем URL-маршруты из приложения search с пространством имен
     path('users/', include('users.urls', namespace='users')),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

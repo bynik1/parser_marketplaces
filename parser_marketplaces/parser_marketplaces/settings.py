@@ -163,3 +163,22 @@ EMAIL_ADMIN = EMAIL_HOST_USER
 AUTH_USER_MODEL = 'users.User'
 
 DEFAULT_USER_IMAGE = MEDIA_URL + 'users/default.png'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'INFO',  # Выводим логи уровня INFO и выше
+            'class': 'logging.StreamHandler',  # Логирование в стандартный вывод
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],  # Логируем в консоль
+            'level': 'INFO',  # Уровень логирования
+            'propagate': True,
+        },
+    },
+}
+
