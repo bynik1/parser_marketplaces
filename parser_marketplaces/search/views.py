@@ -64,7 +64,7 @@ def search_view(request, product_name=None):
                         supplier_id=product.supplier_id,
                         supplier_rating=product.supplier_rating,
                         pics=product.pics,
-                        first_image_path=product.first_image_path
+                        first_image_path=f"media/image/{product.product_id}/1.jpg"
                     )
                     display_results.append(obj)
                 except Exception as e:

@@ -27,7 +27,9 @@ urlpatterns = [
     path('', include('main.urls')), # Включаем URL-маршруты из приложения main для главной страницы
     path('', include('search.urls', namespace='search')), # Включаем URL-маршруты из приложения search с пространством имен
     path('users/', include('users.urls', namespace='users')),
-]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
 
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 handler404 = page_not_found

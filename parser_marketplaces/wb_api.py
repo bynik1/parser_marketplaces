@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
+from django.conf import settings
 import requests
 import os
 import time
@@ -176,11 +177,9 @@ class ProductManager:
             print("Товары не найдены.")
             return
 
-        # for product in products:
-        #     product.display()
-        #     if product.pics > 0:
-        #         ImageDownloader.save_images(product.product_id, product.pics, save_image_all)
-
+        for product in products:
+            if product.pics > 0:
+                ImageDownloader.save_images(product.product_id, product.pics, save_image_all)
         print(f"Количество товаров: {len(products)}")
         return products
         
@@ -193,7 +192,7 @@ class ImageDownloader:
     @staticmethod
     def save_images(product_id, product_pics, save_image_all, timeout=10):
         _short_id = product_id // 100000
-        folder_path = os.path.join("image", str(product_id))
+        folder_path = os.path.join(settings.MEDIA_ROOT, 'image', str(product_id))
         os.makedirs(folder_path, exist_ok=True)
 
         basket = ImageDownloader._determine_basket(_short_id)
