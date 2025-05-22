@@ -9,7 +9,7 @@ from django.shortcuts import redirect
 from .utils import menu
 from django.contrib.auth.decorators import login_required # ✅
 import logging
-
+from django.urls import reverse
 
 logging.basicConfig(
     level=logging.INFO,
@@ -58,4 +58,11 @@ def history_detail(request, history_id):
     # Получаем товары, связанные с этим запросом
     products = Product.objects.filter(searchquery=search_query)
     
-    return render(request, 'main/history_detail.html', {'products': products})
+    context = {
+        'title': f'Результаты поиска товара "{search_query.query_text}"',
+        'products': products,
+        'back_url': reverse('history'),
+        'back_label': 'Вернуться к Истории поиска',
+    }
+
+    return render(request, 'product_results.html', context)

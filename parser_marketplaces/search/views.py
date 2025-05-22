@@ -71,16 +71,13 @@ def search_view(request, product_name=None):
                     logger.error(f"Ошибка при сохранении товара {product.name}: {e}")
 
         data = {
-            'title': f'Результаты по "{query}"',
-            'product_name': query,
-            'marketplace': marketplace,
-            'wb_results': display_results,
-            'form': SearchForm(initial={'query': query}),
-            'sort_options': sort_options,   # ✅ Теперь передаём под правильным именем
-            'current_sort': sort_value
+            'title': f'Результаты поиска товара "{query}"',
+            'products': display_results,
+            'back_url': reverse('search:search_page'),
+            'back_label': 'Вернуться к поиску',
         }
 
-        return render(request, 'search/product_results.html', context=data)
+        return render(request, 'product_results.html', context=data)
 
     return render(request, 'search/search_form.html', {
         'form': form,

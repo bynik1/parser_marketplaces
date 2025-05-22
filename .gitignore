@@ -2,7 +2,6 @@
 chromedriver.exe
 ozon_api/
 image/
-images/
 test/
 yandex/
 migrations/
