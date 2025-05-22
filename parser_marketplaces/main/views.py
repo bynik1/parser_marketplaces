@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponse, HttpResponseNotFound
 from django.template.loader import render_to_string
 import sys
-from search.models import SearchQuery, Product
+from search.models import SearchQuery, Product, SORT_VALUE_CHOICES
 from users.models import User
 from wb_api import ProductManager  # ✅
 from django.shortcuts import redirect   
@@ -11,6 +11,9 @@ from django.contrib.auth.decorators import login_required # ✅
 import logging
 from django.urls import reverse
 
+
+# Словарь для быстрого получения названия фильтра по его значению
+SORT_DICT = dict(SORT_VALUE_CHOICES)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -63,6 +66,7 @@ def history_detail(request, history_id):
         'products': products,
         'back_url': reverse('history'),
         'back_label': 'Вернуться к Истории поиска',
+        'sort_label': SORT_DICT.get(search_query.sort_value, search_query.sort_value),
     }
 
     return render(request, 'product_results.html', context)

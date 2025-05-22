@@ -4,6 +4,15 @@ from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError  # Добавляем импорт
 from django.contrib.auth import get_user_model
 
+
+SORT_VALUE_CHOICES = [
+    ("popular", "По популярности"),
+    ("rate", "По рейтингу"),
+    ("priceup", "По убыванию цены"),
+    ("pricedown", "По убыванию цены"),
+]
+
+
 class Marketplace(models.Model):
     id = models.BigAutoField(primary_key=True)
     name = models.CharField(
@@ -48,9 +57,20 @@ class Product(models.Model):
 class SearchQuery(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='search_queries')
     query_text = models.CharField(max_length=255, verbose_name="Текст запроса")
+    sort_value = models.CharField(
+        max_length=20,
+        choices=SORT_VALUE_CHOICES,
+        default="priceup",
+        verbose_name="Фильтр сортировки",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     marketplaces = models.ManyToManyField('Marketplace', related_name='search_queries')
 
     def __str__(self):
         m_names = ', '.join(self.marketplaces.values_list('name', flat=True)[:3])
         return f"Запрос \"{self.query_text}\" пользователя {self.user.username} ({m_names})"
+    
+    @property
+    def sort_label(self):
+        """Return human readable label for selected sort filter."""
+        return dict(SORT_VALUE_CHOICES).get(self.sort_value, self.sort_value)

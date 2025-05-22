@@ -11,6 +11,7 @@
                         {{ request.query_text }}
                     </a>
                     <div class="text-muted small">{{ request.created_at|date:"d.m.Y H:i" }}</div>
+                    <div class="text-muted small">Фильтр: {{ request.sort_label }}</div>
                 </div>
                 <span class="badge bg-secondary">{{ request.id }}</span>
             </li>

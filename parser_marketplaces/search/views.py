@@ -4,22 +4,22 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from .forms import SearchForm
-from .models import Product, Marketplace, SearchQuery
+from .models import Product, Marketplace, SearchQuery, SORT_VALUE_CHOICES
 from wb_api import ProductManager
 import logging
 
+
+# Константа с вариантами сортировки
+SORT_OPTIONS = [
+    {"value": value, "label": label} for value, label in SORT_VALUE_CHOICES
+]
 logger = logging.getLogger(__name__)
 @login_required
 def search_view(request, product_name=None):
     marketplace = get_object_or_404(Marketplace, name="Wildberries")
 
     # Определяем фильтры один раз
-    sort_options = [
-        {"value": "popular", "label": "По популярности"},
-        {"value": "rate", "label": "По рейтингу"},
-        {"value": "priceup", "label": "Сначала дешёвые"},
-        {"value": "pricedown", "label": "Сначала дорогие"}
-    ]
+    sort_options = SORT_OPTIONS
 
     # Получаем значение из GET-параметра
     sort_value = request.GET.get('sort', 'priceup')
@@ -42,7 +42,11 @@ def search_view(request, product_name=None):
     if query:
         wb_results = ProductManager().search_and_display(query, sort_value)
 
-        search_query = SearchQuery.objects.create(user=request.user, query_text=query)
+        search_query = SearchQuery.objects.create(
+            user=request.user,
+            query_text=query,
+            sort_value=sort_value,
+        )
         search_query.marketplaces.add(marketplace)
 
         display_results = []
@@ -73,6 +77,7 @@ def search_view(request, product_name=None):
         data = {
             'title': f'Результаты поиска товара "{query}"',
             'products': display_results,
+            'sort_label': next((opt['label'] for opt in sort_options if opt['value'] == sort_value), sort_value),
             'back_url': reverse('search:search_page'),
             'back_label': 'Вернуться к поиску',
         }
