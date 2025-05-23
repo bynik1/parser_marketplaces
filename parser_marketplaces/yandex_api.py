@@ -36,15 +36,15 @@ class Product:
 
     @staticmethod
     def from_html_data(soup: BeautifulSoup, base_url: str = "https://market.yandex.ru"):
-        # ID товара
-        source = "none"
+        # Ссылка на изображение
+        image_elem = soup.find('div', attrs={'data-zone-name': 'picture'}).find('img') if soup.find('div', attrs={'data-zone-name': 'picture'}) else None
+        image_url = image_elem['src'] if image_elem and image_elem.get('src') else None
+        if image_url and not image_url.startswith('http'):
+            image_url = base_url + image_url
 
-        url_elem = soup.find('a', attrs={'data-auto': 'snippet-link'})
-        url = base_url + url_elem['href'] if url_elem and url_elem.get('href') else None
-
-        if url:
+        if image_url:
             # Извлечение ID из пути URL (например, /product--.../1810127360)
-            match = re.search(r'/(\d+)', url)
+            match = re.search(r'/(\d+)', image_url)
             if match:
                 product_id = match.group(1)
                 # source = "url_path"
@@ -91,13 +91,10 @@ class Product:
         shop = shop_elem.text.strip() if shop_elem else None
 
         # Ссылка на товар
-        
+        url_elem = soup.find('a', attrs={'data-auto': 'snippet-link'})
+        url = base_url + url_elem['href'] if url_elem and url_elem.get('href') else None
 
-        # Ссылка на изображение
-        image_elem = soup.find('div', attrs={'data-zone-name': 'picture'}).find('img') if soup.find('div', attrs={'data-zone-name': 'picture'}) else None
-        image_url = image_elem['src'] if image_elem and image_elem.get('src') else None
-        if image_url and not image_url.startswith('http'):
-            image_url = base_url + image_url
+        
 
         # Дата доставки
         delivery_date_elem = soup.find('div', attrs={'data-zone-name': 'deliveryInfo'}).find('span', class_=re.compile(r'_1yLiV')) if soup.find('div', attrs={'data-zone-name': 'deliveryInfo'}) else None
@@ -209,7 +206,7 @@ class ProductManager:
             return []
 
         for product in products:
-            product.display()
+            # product.display()
             if product.image_url and save_image_all:
                 ImageDownloader.save_images(product.product_id, product.image_url)
         print(f"Количество товаров: {len(products)}")

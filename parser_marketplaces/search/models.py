@@ -8,9 +8,19 @@ from django.contrib.auth import get_user_model
 SORT_VALUE_CHOICES = [
     ("popular", "По популярности"),
     ("rate", "По рейтингу"),
-    ("priceup", "По убыванию цены"),
+    ("priceup", "По возрастанию цены"),
     ("pricedown", "По убыванию цены"),
 ]
+
+# Соответствие общих значений сортировки конкретным параметрам
+# каждого маркетплейса. Используется при формировании запросов к API
+# маркетплейсов.
+SORT_PARAM_MAPPING = {
+    "popular": {"wb": "popular", "yandex": "dpop"},
+    "rate": {"wb": "rate", "yandex": "rating"},
+    "priceup": {"wb": "priceup", "yandex": "aprice"},
+    "pricedown": {"wb": "pricedown", "yandex": "dprice"},
+}
 
 
 class Marketplace(models.Model):

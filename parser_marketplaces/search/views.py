@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from .forms import SearchForm
-from .models import Product, Marketplace, SearchQuery, SORT_VALUE_CHOICES
+from .models import Product, Marketplace, SearchQuery, SORT_VALUE_CHOICES, SORT_PARAM_MAPPING
 from wb_api import ProductManager as WBProductManager
 from yandex_api import ProductManager as YandexProductManager
 import logging
@@ -25,9 +25,10 @@ def search_view(request, product_name=None):
 
     # Получаем значение из GET-параметра
     sort_value = request.GET.get('sort', 'priceup')
+    logging.info(f"Фильтр сортировки: {sort_value}")
     
-    if sort_value not in [opt['value'] for opt in sort_options]:
-        sort_value = 'priceup'
+    # if sort_value not in [opt['value'] for opt in sort_options]:
+    #     sort_value = 'priceup'
 
     if product_name:
         query = product_name
@@ -42,8 +43,11 @@ def search_view(request, product_name=None):
         query = None
 
     if query:
-        wb_results = WBProductManager().search_and_display(query, sort_value)
-        yandex_results = YandexProductManager().search_and_display(query)
+        wb_sort = SORT_PARAM_MAPPING.get(sort_value, {}).get("wb", sort_value)
+        yandex_sort = SORT_PARAM_MAPPING.get(sort_value, {}).get("yandex", "dpop")
+
+        wb_results = WBProductManager().search_and_display(query, wb_sort)
+        yandex_results = YandexProductManager().search_and_display(query, yandex_sort)
     
 
         search_query = SearchQuery.objects.create(
