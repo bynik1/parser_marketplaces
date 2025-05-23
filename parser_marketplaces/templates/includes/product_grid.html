@@ -13,6 +13,7 @@
                     {% endif %}
                     {% if product.brand %}<span class="text-muted"> ({{ product.brand }})</span>{% endif %}
                 </h5>
+                <p class="card-text text-muted mb-1">Маркетплейс: {{ product.marketplace.name }}</p>
                 <p class="card-text mb-1">{{ product.price_product|floatformat:0 }} ₽</p>
                 {% if product.review_rating %}
                 <p class="card-text text-muted mb-1">Рейтинг: {{ product.review_rating }}</p>
