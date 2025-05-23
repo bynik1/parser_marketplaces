@@ -9,7 +9,7 @@ from wb_api import ProductManager as WBProductManager
 from yandex_api import ProductManager as YandexProductManager
 import logging
 
-
+import itertools
 # Константа с вариантами сортировки
 SORT_OPTIONS = [
     {"value": value, "label": label} for value, label in SORT_VALUE_CHOICES
@@ -57,7 +57,8 @@ def search_view(request, product_name=None):
         )
         search_query.marketplaces.add(marketplace_wb, marketplace_yandex)
 
-        display_results = []
+        wb_objects = []
+        yandex_objects = []
 
         if wb_results:
             for product in wb_results:
@@ -78,7 +79,7 @@ def search_view(request, product_name=None):
                         pics=product.pics,
                         first_image_path=f"/media/image/wb/{product.product_id}/1.jpg"
                     )
-                    display_results.append(obj)
+                    wb_objects.append(obj)
                 except Exception as e:
                     logger.error(f"Ошибка при сохранении товара {product.name}: {e}")
                     
@@ -106,11 +107,27 @@ def search_view(request, product_name=None):
                         delivery_date=product.delivery_date,
                         duty=product.duty
                     )
-                    display_results.append(obj)
+                    yandex_objects.append(obj)
                 except Exception as e:
                     logger.error(f"Ошибка при сохранении товара {product.name}: {e}")
 
-
+        
+        # Составляем общий список товаров в зависимости от выбранного фильтра
+        if sort_value == "popular":
+            display_results = []
+            for wb_obj, ym_obj in itertools.zip_longest(wb_objects, yandex_objects):
+                if wb_obj:
+                    display_results.append(wb_obj)
+                if ym_obj:
+                    display_results.append(ym_obj)
+        else:
+            display_results = wb_objects + yandex_objects
+            if sort_value == "priceup":
+                display_results.sort(key=lambda p: (p.price_product is None, p.price_product))
+            elif sort_value == "pricedown":
+                display_results.sort(key=lambda p: (p.price_product is None, p.price_product if p.price_product is not None else 0), reverse=True)
+            elif sort_value == "rate":
+                display_results.sort(key=lambda p: (p.review_rating is None, p.review_rating if p.review_rating is not None else 0), reverse=True)
         data = {
             'title': f'Результаты поиска товара "{query}"',
             'products': display_results,

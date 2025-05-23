@@ -82,9 +82,9 @@ class Product:
 
         # Рейтинг и количество отзывов
         rating_elem = soup.find('span', attrs={'data-auto': 'reviews'})
-        rating = float(rating_elem.find('span', class_=re.compile(r'ds-rating__value')).text) if rating_elem else None
-        reviews_count_text = rating_elem.find('span', class_=re.compile(r'ds-text_lineClamp')).text if rating_elem else None
-        reviews_count = int(re.sub(r'[^\d]', '', reviews_count_text)) if reviews_count_text else None
+        rating = float(rating_elem.find('span', class_=re.compile(r'ds-rating__value')).text) if rating_elem else 0
+        reviews_count_text = rating_elem.find('span', class_=re.compile(r'ds-text_lineClamp')).text if rating_elem else 0
+        reviews_count = int(re.sub(r'[^\d]', '', reviews_count_text)) if reviews_count_text else 0
 
         # Магазин (тип оплаты, например, "Альфа")
         shop_elem = soup.find('div', class_=re.compile(r'ds-textLine')).find('span', class_=re.compile(r'ds-text_lineClamp'))
@@ -141,8 +141,8 @@ class Product:
             f"Бренд: {self.brand or 'N/A'}\n"
             f"Цена: {self.price or 'N/A'} ₽\n"
             f"Цена без скидки: {self.original_price or 'N/A'} ₽\n"
-            f"Рейтинг: {self.rating or 'N/A'}\n"
-            f"Количество отзывов: {self.reviews_count or 'N/A'}\n"
+            f"Рейтинг: {self.rating or 0}\n"
+            f"Количество отзывов: {self.reviews_count or 0}\n"
             f"Магазин: {self.shop or 'N/A'}\n"
             f"Ссылка на товар: {self.url or 'N/A'}\n"
             f"Ссылка на изображение: {self.image_url or 'N/A'}\n"
