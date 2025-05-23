@@ -5,7 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from .forms import SearchForm
 from .models import Product, Marketplace, SearchQuery, SORT_VALUE_CHOICES
-from wb_api import ProductManager
+from wb_api import ProductManager as WBProductManager
+from yandex_api import ProductManager as YandexProductManager
 import logging
 
 
@@ -16,7 +17,8 @@ SORT_OPTIONS = [
 logger = logging.getLogger(__name__)
 @login_required
 def search_view(request, product_name=None):
-    marketplace = get_object_or_404(Marketplace, name="Wildberries")
+    marketplace_wb = get_object_or_404(Marketplace, name="Wildberries")
+    marketplace_yandex = get_object_or_404(Marketplace, name="Яндекс.Маркет")
 
     # Определяем фильтры один раз
     sort_options = SORT_OPTIONS
@@ -40,14 +42,16 @@ def search_view(request, product_name=None):
         query = None
 
     if query:
-        wb_results = ProductManager().search_and_display(query, sort_value)
+        wb_results = WBProductManager().search_and_display(query, sort_value)
+        yandex_results = YandexProductManager().search_and_display(query)
+    
 
         search_query = SearchQuery.objects.create(
             user=request.user,
             query_text=query,
             sort_value=sort_value,
         )
-        search_query.marketplaces.add(marketplace)
+        search_query.marketplaces.add(marketplace_wb, marketplace_yandex)
 
         display_results = []
 
@@ -55,7 +59,7 @@ def search_view(request, product_name=None):
             for product in wb_results:
                 try:
                     obj = Product.objects.create(
-                        marketplace=marketplace,
+                        marketplace=marketplace_wb,
                         searchquery=search_query,
                         product_id=product.product_id,
                         name=product.name,
@@ -68,11 +72,40 @@ def search_view(request, product_name=None):
                         supplier_id=product.supplier_id,
                         supplier_rating=product.supplier_rating,
                         pics=product.pics,
-                        first_image_path=f"media/image/{product.product_id}/1.jpg"
+                        first_image_path=f"/media/image/wb/{product.product_id}/1.jpg"
                     )
                     display_results.append(obj)
                 except Exception as e:
                     logger.error(f"Ошибка при сохранении товара {product.name}: {e}")
+                    
+        if yandex_results:
+            logger.debug("Yandex results count: %s", len(yandex_results))  # Логирование количества результатов
+            for product in yandex_results:
+                logger.debug("Processing Yandex product: %s", vars(product))  # Логирование данных
+                try:
+                    obj = Product.objects.create(
+                        marketplace=marketplace_yandex,
+                        searchquery=search_query,
+                        product_id=int(product.product_id) if product.product_id else 0,
+                        name=product.name,
+                        brand=product.brand,
+                        review_rating=product.rating,
+                        feedbacks=product.reviews_count,
+                        color=None,
+                        price_product=product.price,
+                        price_basic=product.original_price,
+                        supplier_id=None,
+                        supplier_rating=None,
+                        pics=1 if product.image_url else 0,
+                        first_image_path=f"/media/image/yma/{product.product_id}/1.jpg" if product.image_url else None,
+                        url=product.url,
+                        delivery_date=product.delivery_date,
+                        duty=product.duty
+                    )
+                    display_results.append(obj)
+                except Exception as e:
+                    logger.error(f"Ошибка при сохранении товара {product.name}: {e}")
+
 
         data = {
             'title': f'Результаты поиска товара "{query}"',

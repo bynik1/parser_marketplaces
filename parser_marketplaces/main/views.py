@@ -22,13 +22,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-
-data_db = [
-    {'id': 1, 'title': 'Анджелина Джоли', 'content': 'Биография Анджелины Джоли', 'is_published': True},
-    {'id': 2, 'title': 'Марго Робби', 'content': 'Биография Марго Робби', 'is_published': False},
-    {'id': 3, 'title': 'Джулия Робертс', 'content': 'Биография Джулия Робертс', 'is_published': True},
-]
-
 def index(request):
     data = {
         'title': 'Главная страница',

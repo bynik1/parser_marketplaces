@@ -190,7 +190,7 @@ class ImageDownloader:
     @staticmethod
     def save_images(product_id, product_pics, save_image_all, timeout=10):
         _short_id = product_id // 100000
-        folder_path = os.path.join(settings.MEDIA_ROOT, 'image', str(product_id))
+        folder_path = os.path.join(settings.MEDIA_ROOT, 'image', 'wb', str(product_id))
         os.makedirs(folder_path, exist_ok=True)
 
         basket = ImageDownloader._determine_basket(_short_id)
@@ -205,7 +205,7 @@ class ImageDownloader:
                 response.raise_for_status()
                 with open(image_path, "wb") as file:
                     file.write(response.content)
-                print(f"Успешно сохранено: {image_path}")
+                # print(f"Успешно сохранено: {image_path}")
             except requests.exceptions.RequestException as e:
                 print(f"Ошибка загрузки {image_url}: {e}")
             except requests.exceptions.HTTPError as err:

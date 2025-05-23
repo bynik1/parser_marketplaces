@@ -39,7 +39,7 @@ class Marketplace(models.Model):
 class Product(models.Model):
     marketplace = models.ForeignKey(Marketplace, on_delete=models.CASCADE, related_name='products')
     product_id = models.BigIntegerField()  # ID товара на маркетплейсе
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=510)
     brand = models.CharField(max_length=100, blank=True, null=True)
     review_rating = models.FloatField(blank=True, null=True)
     feedbacks = models.IntegerField(blank=True, null=True)
@@ -49,8 +49,11 @@ class Product(models.Model):
     supplier_id = models.BigIntegerField(blank=True, null=True)
     supplier_rating = models.FloatField(blank=True, null=True)
     pics = models.IntegerField(default=0)
-    first_image_path = models.CharField(max_length=510, blank=True, null=True)
+    first_image_path = models.CharField(max_length=1024, blank=True, null=True)
     searchquery = models.ForeignKey('SearchQuery', on_delete=models.SET_NULL, related_name='products', null=True, blank=True)
+    url = models.URLField(max_length=1024, blank=True, null=True)
+    delivery_date = models.CharField(max_length=255, blank=True, null=True)
+    duty = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     def __str__(self):
         return f"{self.name} ({self.marketplace.name})"
 

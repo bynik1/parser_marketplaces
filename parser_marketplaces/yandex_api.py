@@ -1,16 +1,12 @@
 from dataclasses import dataclass
 from typing import Optional, List
-from django.conf import settings
 import requests
-import brotli
-import gzip
 import os
 import logging
-import json
 from urllib.parse import quote, urlencode
-import chardet
 from bs4 import BeautifulSoup
 import re
+from django.conf import settings
 
 # Настройка логирования
 logging.basicConfig(
@@ -41,8 +37,27 @@ class Product:
     @staticmethod
     def from_html_data(soup: BeautifulSoup, base_url: str = "https://market.yandex.ru"):
         # ID товара
-        product_id_elem = soup.find('div', attrs={'data-id': True})
-        product_id = product_id_elem['data-id'] if product_id_elem else ''
+        source = "none"
+
+        url_elem = soup.find('a', attrs={'data-auto': 'snippet-link'})
+        url = base_url + url_elem['href'] if url_elem and url_elem.get('href') else None
+
+        if url:
+            # Извлечение ID из пути URL (например, /product--.../1810127360)
+            match = re.search(r'/(\d+)', url)
+            if match:
+                product_id = match.group(1)
+                # source = "url_path"
+                logger.info(f"Извлечён product_id из URL пути: {product_id}")
+            # else:
+            #     # Попытка извлечь offerId из параметра sku
+            #     match = re.search(r'sku=(\d+)', url)
+            #     if match:
+            #         product_id = match.group(1)
+            #         source = "url_sku"
+            #         logger.info(f"Извлечён product_id из URL sku: {product_id}")
+            #     else:
+            #         logger.warning("ID не найден в URL товара")
 
         # Название
         name_elem = soup.find('span', attrs={'data-auto': 'snippet-title'})
@@ -76,8 +91,7 @@ class Product:
         shop = shop_elem.text.strip() if shop_elem else None
 
         # Ссылка на товар
-        url_elem = soup.find('a', attrs={'data-auto': 'snippet-link'})
-        url = base_url + url_elem['href'] if url_elem and url_elem.get('href') else None
+        
 
         # Ссылка на изображение
         image_elem = soup.find('div', attrs={'data-zone-name': 'picture'}).find('img') if soup.find('div', attrs={'data-zone-name': 'picture'}) else None
@@ -142,7 +156,8 @@ class Product:
                 '\n'.join(f"  {k}: {v}" for k, v in self.characteristics.items()) if self.characteristics else "  N/A"
             ) + "\n"
         )
-        print(text)
+        logger.info("product: %s", text)
+
 
 class YandexMarketAPI:
     BASE_URL = "https://market.yandex.ru/search"
@@ -176,6 +191,7 @@ class YandexMarketAPI:
         }
         logger.info(f"Request URL: {self.BASE_URL}?{urlencode(params)}")
         response = requests.get(self.BASE_URL, headers=self.headers, params=params)
+        logger.info("HTTP Status Code: %s", response.status_code)
         with open("output.html", "w", encoding="utf-8") as file:
             file.write(response.text)
         return response.text
@@ -186,8 +202,8 @@ class ProductManager:
 
     def search_and_display(self, search_query: str, search_sort: str = "dpop", save_image_all: bool = True) -> List[Product]:
         html_content = self.api.search_products(search_query, search_sort)
+        # logger.info("Sample Yandex results (first 3): %s", html_content)
         products = self._parse_response(html_content)
-
         if not products:
             print("Товары не найдены.")
             return []
@@ -209,14 +225,13 @@ class ProductManager:
             product = Product.from_html_data(elem)
             if product.product_id or product.name:  # Фильтруем пустые результаты
                 products.append(product)
-
+        
         return products
 
 class ImageDownloader:
     @staticmethod
-
     def save_images(product_id: str, image_url: str, timeout: int = 10):
-        folder_path = os.path.join('media', 'image', str(product_id))
+        folder_path = os.path.join(settings.MEDIA_ROOT, 'image', 'yma', str(product_id))
         image_path = os.path.join(folder_path, "1.jpg")
         logger.info(f"Попытка загрузки изображения: {image_url}")
         try:
