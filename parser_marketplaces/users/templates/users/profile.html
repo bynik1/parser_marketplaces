@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header text-center">
+                <h1 class="h5 mb-0">Профиль</h1>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-error text-danger mb-3">{{ form.non_field_errors }}</div>
+                    {% for f in form %}
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ f.id_for_label }}">{{ f.label }}{% if not f.field.required %}{% endif %}</label>
+                        {{ f }}
+                        <div class="form-error text-danger small">{{ f.errors }}</div>
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                </form>
+                <hr>
+                <p><a href="{% url 'users:password_change' %}">Сменить пароль</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container">
+    <h2 class="mb-4">Поиск товаров</h2>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <!-- Строка с сортировкой -->
+        <div class="d-flex align-items-center mb-3">
+            <label class="form-label me-2 mb-0">Сортировать по:</label>
+            <select class="form-select form-select-sm" name="sort" id="sort" style="width: auto;">
+                {% for option in sort_options %}
+                    <option value="{{ option.value }}" {% if option.value == current_sort %}selected{% endif %}>
+                        {{ option.label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <!-- Поле ввода поиска -->
+        <div class="mb-3">
+            {{ form.query.label_tag }}
+            {{ form.query }}
+        </div>
+        
+        <!-- Кнопка поиска -->
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Найти</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

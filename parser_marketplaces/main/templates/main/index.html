@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load i18n %}
+<div class="p-5 mb-4 bg-white rounded-3"> 
+    <div class="container-fluid py-5">
+        <h1 class="display-5 fw-bold">{{ title }}</h1>
+        <p class="col-md-8 fs-4">
+            {% trans "Добро пожаловать на сайт! Здесь вы можете искать товары на различных маркетплейсах и отслеживать историю запросов." %}
+        </p>
+        <a class="btn btn-primary btn-lg" href="{% url 'search:search_page' %}">{% trans "Перейти к поиску" %}</a>
+    </div>
+</div>
+{% endblock %}

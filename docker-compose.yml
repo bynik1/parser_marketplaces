@@ -1,0 +1,23 @@
+services:
+    db:
+      image: postgres:17
+      environment:
+        POSTGRES_DB: mydb
+        POSTGRES_USER: user
+        POSTGRES_PASSWORD: pass
+      ports:
+        - "5432:5432"
+  
+    web:
+      build: .
+      env_file:
+        - .env.docker
+      volumes:
+        - ./parser_marketplaces:/app/parser_marketplaces
+        - ./media:/app/media
+        # - ./entrypoint.sh:/entrypoint.sh
+        # - ./wait-for-it.sh:/wait-for-it.sh
+      depends_on:
+        - db
+      ports:
+        - "8000:8000"

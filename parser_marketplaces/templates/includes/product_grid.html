@@ -1,0 +1,36 @@
+{% comment %}Reusable grid for displaying products{% endcomment %}
+<div class="row g-3">
+    {% for product in products %}
+    <div class="col-6 col-md-4 col-lg-3">
+        <div class="card h-100">
+            <img src="{{product.first_image_path}}" class="card-img-top" alt="{{ product.name }}">
+            <div class="card-body">
+                <h5 class="card-title">
+                    {% if product.url %}
+                    <a href="{{ product.url }}" target="_blank" rel="noopener noreferrer" class="text-decoration-none">{{ product.name }}</a>
+                    {% else %}
+                    <a href="https://www.wildberries.ru/catalog/{{ product.product_id }}/detail.aspx" target="_blank" rel="noopener noreferrer" class="text-decoration-none">{{ product.name }}</a>
+                    {% endif %}
+                    {% if product.brand %}<span class="text-muted"> ({{ product.brand }})</span>{% endif %}
+                </h5>
+                <p class="card-text text-muted mb-1">Маркетплейс: {{ product.marketplace_name }}</p>
+                <p class="card-text mb-1">{{ product.price_product|floatformat:0 }} ₽</p>
+                {% if product.review_rating %}
+                <p class="card-text text-muted mb-1">Рейтинг: {{ product.review_rating }}</p>
+                {% endif %}
+                {% if product.feedbacks %}
+                <p class="card-text text-muted mb-0">Отзывы: {{ product.feedbacks }}</p>
+                {% endif %}
+                {% if product.delivery_date %}
+                <p class="card-text text-muted mb-0">Доставка: {{ product.delivery_date }}</p>
+                {% endif %}
+                {% if product.duty %}
+                <p class="card-text text-muted mb-0">Пошлина: {{ product.duty|floatformat:0 }} ₽</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <p class="text-muted">Товары не найдены.</p>
+    {% endfor %}
+</div>

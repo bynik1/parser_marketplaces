@@ -1,0 +1,62 @@
+#My file
+chromedriver.exe
+ozon_api/
+image/
+test/
+yandex/
+migrations/
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Django
+*.sqlite3
+*.log
+db.sqlite3
+media/
+staticfiles/
+local_settings.py
+
+# Virtualenv
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Docker
+*.pid
+*.seed
+*.db
+.env
+docker-compose.override.yml
+.dockerignore
+
+# System files
+*.swp
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Coverage / testing
+htmlcov/
+.coverage
+.tox/
+.nox/
+.pytest_cache/
+pytestdebug.log
+selenium/
+.env.docker

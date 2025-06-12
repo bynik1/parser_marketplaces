@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container my-4">
+    <h1 class="mb-4">{{ title }}</h1>
+    {% if sort_label %}
+    <p class="text-muted mb-3">Фильтр: {{ sort_label }}</p>
+    {% endif %}
+    {% if products %}
+        {% include 'includes/product_grid.html' with products=products %}
+    {% else %}
+        <p class="text-muted">Нет данных.</p>
+    {% endif %}
+    <a href="{% url 'history' %}" class="btn btn-link mt-3">&larr; Вернуться к Истории поиска</a>
+</div>
+{% endblock %}

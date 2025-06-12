@@ -1,0 +1,14 @@
+{% load static %}
+
+
+
+<div class="photo-widget">
+    {% if widget.value %}
+        <img src="{{ widget.value.url }}" alt="Фото">
+    {% else %}
+        <img src="{% static 'users/default.png' %}" alt="Фото по умолчанию">
+    {% endif %}
+
+    <input type="{{ widget.type }}" name="{{ widget.name }}"
+           {% include "django/forms/widgets/attrs.html" %}>
+</div>
