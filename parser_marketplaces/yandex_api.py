@@ -48,7 +48,7 @@ class Product:
             if match:
                 product_id = match.group(1)
                 # source = "url_path"
-                logger.info(f"Извлечён product_id из URL пути: {product_id}")
+                # logger.info(f"Извлечён product_id из URL пути: {product_id}")
             # else:
             #     # Попытка извлечь offerId из параметра sku
             #     match = re.search(r'sku=(\d+)', url)
@@ -100,7 +100,7 @@ class Product:
             logger.warning("Элемент с классом 'ds-textLine' не найден, shop_name будет None")
             logger.warning(f"url = {url}")
 
-        logger.info(f"payment_name = {payment_name}")
+        # logger.info(f"payment_name = {payment_name}")
         
         # Дата доставки
         delivery_date_elem = soup.find('div', attrs={'data-zone-name': 'deliveryInfo'}).find('span', class_=re.compile(r'_1yLiV')) if soup.find('div', attrs={'data-zone-name': 'deliveryInfo'}) else None

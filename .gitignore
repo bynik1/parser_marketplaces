@@ -60,3 +60,5 @@ htmlcov/
 pytestdebug.log
 selenium/
 .env.docker
+
+cookies.json

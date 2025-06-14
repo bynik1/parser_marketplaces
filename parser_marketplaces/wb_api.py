@@ -152,7 +152,7 @@ class ProductManager:
 
     def search_and_display(self, search_query: str, search_sort, save_image_all=False):
         response = self.api.search_products(search_query, search_sort)
-        products = self._parse_response(response)
+        products = self._parse_response(response)[:16]
         if not products:
             logger.info("Товары не найдены.")
             return
@@ -179,11 +179,13 @@ class ImageDownloader:
         for i in range(1, product_pics + 1):
             image_url = f"https://basket-{basket}.wbbasket.ru/vol{_short_id}/part{product_id // 1000}/{product_id}/images/big/{i}.webp"
             image_path = f"{folder_path}/{i}.jpg"
+            logger.info(f"Попытка загрузки изображения: {image_url}")
             try:
                 response = requests.get(image_url)
                 response.raise_for_status()
                 with open(image_path, "wb") as file:
                     file.write(response.content)
+                logger.info(f"Успешно сохранено: {image_path}")
             except requests.exceptions.RequestException as e:
                 logger.error(f"Ошибка загрузки {image_url}: {e}")
             except requests.exceptions.HTTPError as err:
@@ -230,9 +232,9 @@ class ImageDownloader:
             return '16'
         elif 2622 <= _short_id <= 2836:
             return '17'
-        elif 2837 <= _short_id <= 3051:
+        elif 2837 <= _short_id <= 3053:
             return '18'
-        elif 3052 <= _short_id <= 3269:
+        elif 3054 <= _short_id <= 3269:
             return '19'
         elif 3270 <= _short_id <= 3485:
             return '20'
@@ -242,11 +244,11 @@ class ImageDownloader:
             return '22'
         elif 3918 <= _short_id <= 4133:
             return '23'
-        elif 4136 <= _short_id <= 4351:
+        elif 4134 <= _short_id <= 4349:
             return '24'
-        elif 4352 <= _short_id <= 4567:
+        elif 4350 <= _short_id <= 4565:
             return '25'
-        elif 4568 <= _short_id <= 4783:
+        elif 4566 <= _short_id <= 4781:
             return '26'
         else:
             return '27'

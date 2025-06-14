@@ -16,10 +16,10 @@ SORT_VALUE_CHOICES = [
 # каждого маркетплейса. Используется при формировании запросов к API
 # маркетплейсов.
 SORT_PARAM_MAPPING = {
-    "popular": {"wb": "popular", "yandex": "dpop"},
-    "rate": {"wb": "rate", "yandex": "rating"},
-    "priceup": {"wb": "priceup", "yandex": "aprice"},
-    "pricedown": {"wb": "pricedown", "yandex": "dprice"},
+    "popular": {"wb": "popular", "yandex": "dpop", "mm": "0"},
+    "rate": {"wb": "rate", "yandex": "rating", "mm": "3"},
+    "priceup": {"wb": "priceup", "yandex": "aprice", "mm": "1"},
+    "pricedown": {"wb": "pricedown", "yandex": "dprice", "mm": "2"},
 }
 
 class Product(models.Model):

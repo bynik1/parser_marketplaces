@@ -19,6 +19,23 @@
             </select>
         </div>
         
+        <!-- Выбор маркетплейсов -->
+        <div class="mb-3">
+            <label class="form-label">Выберите маркетплейсы:</label>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="marketplaces" value="Wildberries" id="marketplace_wb" checked>
+                <label class="form-check-label" for="marketplace_wb">Wildberries</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="marketplaces" value="Яндекс.Маркет" id="marketplace_yandex" checked>
+                <label class="form-check-label" for="marketplace_yandex">Яндекс.Маркет</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="marketplaces" value="Мегамаркет" id="marketplace_mm" checked>
+                <label class="form-check-label" for="marketplace_mm">Мегамаркет</label>
+            </div>
+        </div>
+        
         <!-- Поле ввода поиска -->
         <div class="mb-3">
             {{ form.query.label_tag }}
