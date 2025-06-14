@@ -111,7 +111,8 @@ def search_view(request, product_name=None):
                         supplier_id=product.supplier_id,
                         supplier_rating=product.supplier_rating,
                         pics=product.pics or 0,
-                        first_image_path=first_image_path
+                        first_image_path=first_image_path,
+                        delivery_date=product.delivery_date
                     )
                     wb_objects.append(obj)
                 except Exception as e:

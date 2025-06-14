@@ -7,6 +7,8 @@ import time
 import logging
 import json
 from urllib.parse import urlencode
+from datetime import datetime, timedelta
+import math
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,11 +33,28 @@ class Product:
     supplier_rating: Optional[float]
     pics: int
     first_image_path: Optional[str] = None
+    delivery_date: Optional[str] = None  # New field for delivery date
 
 
     @staticmethod
     def from_api_data(data):
         image_path = f"image/{data.get('id')}/1.jpg" if data.get('pics') > 0 else None
+        
+        # Calculate delivery date
+        delivery_date = None
+        time2 = data.get('time2')
+        logger.info(f"time2 = {time2}")
+        if time2 is not None:
+            days = math.ceil(time2 / 24)  # Divide by 24 and round up
+            current_date = datetime.now()
+            delivery = current_date + timedelta(days=days)
+            # Format as "date month_name" (e.g., "15 June")
+            month_names = [
+                "Января", "Февраля", "Марта", "Апреля", "Мая", "Июня",
+                "Июля", "Августа", "Сентября", "Октября", "Ноября", "Декабря"
+            ]
+            delivery_date = f"{delivery.day} {month_names[delivery.month - 1]}"
+
         return Product(
             product_id=data.get('id'),
             name=data.get('name'),
@@ -48,7 +67,8 @@ class Product:
             supplier_id=data.get('supplierId'),
             supplier_rating=data.get('supplierRating'),
             pics=data.get('pics', 0),
-            first_image_path=image_path
+            first_image_path=image_path,
+            delivery_date=delivery_date
         )
 
 
@@ -82,12 +102,13 @@ class Product:
             f"Средняя оценка продавца: {self.supplier_rating}\n"
             f"Количество фоток: {self.pics}\n"
             f"Путь к 1 изображению: {self.first_image_path}\n"
+            f"Дата доставки: {self.delivery_date}\n"  # Added delivery date to display
         )
         logger.info(text)
 
 
 class WildberriesAPI:
-    BASE_URL = 'https://search.wb.ru/exactmatch/ru/male/v13/search' 
+    BASE_URL = 'https://search.wb.ru/exactmatch/ru/male/v13/search'
 
     def __init__(self):
         self.headers = {
@@ -150,13 +171,14 @@ class ProductManager:
     def __init__(self):
         self.api = WildberriesAPI()
 
-    def search_and_display(self, search_query: str, search_sort, save_image_all=False):
+    def search_and_display(self, search_query: str, search_sort='popular', save_image_all=False):
         response = self.api.search_products(search_query, search_sort)
         products = self._parse_response(response)[:16]
         if not products:
             logger.info("Товары не найдены.")
             return
         for product in products:
+            # product.display()  # Display product details including delivery date
             if product.pics > 0:
                 ImageDownloader.save_images(product.product_id, product.pics, save_image_all)
         logger.info(f"Количество товаров: {len(products)}")
