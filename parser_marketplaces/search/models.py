@@ -57,6 +57,7 @@ class SearchQuery(models.Model):
         default="priceup",
         verbose_name="Фильтр сортировки",
     )
+    price_range = models.CharField(max_length=20, blank=True, null=True, verbose_name="Диапозон цены")
     created_at = models.DateTimeField(auto_now_add=True)
     marketplace_names = models.TextField(verbose_name="Названия маркетплейсов", blank=True, default="[]")
 

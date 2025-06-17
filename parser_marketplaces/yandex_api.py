@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 import re
 from django.conf import settings
 
-# Настройка логирования
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -36,42 +35,27 @@ class Product:
 
     @staticmethod
     def from_html_data(soup: BeautifulSoup, base_url: str = "https://market.yandex.ru"):
-        # Ссылка на изображение
         image_elem = soup.find('div', attrs={'data-zone-name': 'picture'}).find('img') if soup.find('div', attrs={'data-zone-name': 'picture'}) else None
         image_url = image_elem['src'] if image_elem and image_elem.get('src') else None
         if image_url and not image_url.startswith('http'):
             image_url = base_url + image_url
 
         if image_url:
-            # Извлечение ID из пути URL (например, /product--.../1810127360)
             match = re.search(r'/(\d+)', image_url)
             if match:
                 product_id = match.group(1)
-                # source = "url_path"
-                # logger.info(f"Извлечён product_id из URL пути: {product_id}")
-            # else:
-            #     # Попытка извлечь offerId из параметра sku
-            #     match = re.search(r'sku=(\d+)', url)
-            #     if match:
-            #         product_id = match.group(1)
-            #         source = "url_sku"
-            #         logger.info(f"Извлечён product_id из URL sku: {product_id}")
-            #     else:
-            #         logger.warning("ID не найден в URL товара")
+            else:
+                product_id = None
 
-        # Название
         name_elem = soup.find('span', attrs={'data-auto': 'snippet-title'})
         name = name_elem.text.strip() if name_elem else None
 
-        # Бренд (извлекаем из названия, первое слово до пробела)
         brand = name.split()[0] if name and len(name.split()) > 0 else None
 
-        # Цена
         price_elem = soup.find('span', attrs={'data-auto': 'snippet-price-current'})
         price_text = price_elem.find('span', class_=re.compile(r'ds-text_weight_bold')).text if price_elem else None
         price = int(re.sub(r'[^\d]', '', price_text)) if price_text else None
 
-        # Исходная цена (если есть скидка)
         original_price_elem = soup.find('div', attrs={'data-auto': 'discount-badge'})
         original_price = None
         if original_price_elem and price:
@@ -80,17 +64,14 @@ class Product:
                 discount_percent = int(re.sub(r'[^\d]', '', discount_elem.text))
                 original_price = int(price / (1 - discount_percent / 100))
 
-        # Рейтинг и количество отзывов
         rating_elem = soup.find('span', attrs={'data-auto': 'reviews'})
         rating = float(rating_elem.find('span', class_=re.compile(r'ds-rating__value')).text) if rating_elem else 0
         reviews_count_text = rating_elem.find('span', class_=re.compile(r'ds-text_lineClamp')).text if rating_elem else 0
         reviews_count = int(re.sub(r'[^\d]', '', reviews_count_text)) if reviews_count_text else 0
 
-        
-        # Ссылка на товар
         url_elem = soup.find('a', attrs={'data-auto': 'snippet-link'})
         url = base_url + url_elem['href'] if url_elem and url_elem.get('href') else None
-        # Магазин (тип оплаты, например, "Альфа")
+
         payment_type = soup.find('div', class_=re.compile(r'ds-textLine'))
         payment_name = None
         if payment_type:
@@ -98,24 +79,17 @@ class Product:
             payment_name = shop_span.get_text(strip=True) if shop_span else None
         else:
             logger.warning("Элемент с классом 'ds-textLine' не найден, shop_name будет None")
-            logger.warning(f"url = {url}")
 
-        # logger.info(f"payment_name = {payment_name}")
-        
-        # Дата доставки
         delivery_date_elem = soup.find('div', attrs={'data-zone-name': 'deliveryInfo'}).find('span', class_=re.compile(r'_1yLiV')) if soup.find('div', attrs={'data-zone-name': 'deliveryInfo'}) else None
         delivery_date = delivery_date_elem.text.strip() if delivery_date_elem else None
 
-        # Типы доставки (ПВЗ, Курьер)
         delivery_types_elems = soup.find('div', attrs={'data-zone-name': 'deliveryInfo'}).find_all('span', class_=re.compile(r'_1U2DA')) if soup.find('div', attrs={'data-zone-name': 'deliveryInfo'}) else []
         delivery_types = [elem.text.strip() for elem in delivery_types_elems] if delivery_types_elems else []
 
-        # Пошлина
         duty_elem = soup.find('div', class_=re.compile(r'_1fiGC')).find('span', class_=re.compile(r'ds-valueLine')) if soup.find('div', class_=re.compile(r'_1fiGC')) else None
         duty_text = duty_elem.find('span', class_=re.compile(r'ds-text_weight_reg')).text if duty_elem else None
         duty = int(re.sub(r'[^\d]', '', duty_text)) if duty_text else None
 
-        # Краткие характеристики
         characteristics_elems = soup.find_all('div', class_=re.compile(r'_2Ce4O'))
         characteristics = {}
         for elem in characteristics_elems:
@@ -161,7 +135,6 @@ class Product:
         )
         logger.info("product: %s", text)
 
-
 class YandexMarketAPI:
     BASE_URL = "https://market.yandex.ru/search"
 
@@ -184,14 +157,23 @@ class YandexMarketAPI:
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36",
         }
 
-    def search_products(self, query: str, sort: str = "dpop") -> str:
+    def search_products(self, query: str, sort: str = "dpop", price_min='', price_max='') -> str:
         params = {
             "text": quote(query),
-            "sort": sort,  # dpop, aprice, dprice, rating
-            "lr": 65,  # Новосибирск
+            "sort": sort,
+            "lr": 65,
             "gps": "82.92043,55.030199",
             "isCpa": 1,
         }
+        try:
+            if price_min.strip():
+                params["pricefrom"] = int(float(price_min))
+            if price_max.strip():
+                params["priceto"] = int(float(price_max))
+            logger.info(f"Фильтры цен: pricefrom={params.get('pricefrom', 'не указано')}, priceto={params.get('priceto', 'не указано')}")
+        except ValueError as e:
+            logger.error(f"Ошибка при обработке цен: {e}, price_min={price_min}, price_max={price_max}")
+
         logger.info(f"Request URL: {self.BASE_URL}?{urlencode(params)}")
         response = requests.get(self.BASE_URL, headers=self.headers, params=params)
         logger.info("HTTP Status Code: %s", response.status_code)
@@ -203,30 +185,27 @@ class ProductManager:
     def __init__(self):
         self.api = YandexMarketAPI()
 
-    def search_and_display(self, search_query: str, search_sort: str = "dpop", save_image_all: bool = True) -> List[Product]:
-        html_content = self.api.search_products(search_query, search_sort)
-        # logger.info("Sample Yandex results (first 3): %s", html_content)
+    def search_and_display(self, search_query: str, search_sort: str = "dpop", price_min='', price_max='', save_image_all: bool = True) -> List[Product]:
+        html_content = self.api.search_products(search_query, search_sort, price_min, price_max)
         products = self._parse_response(html_content)
         if not products:
-            print("Товары не найдены.")
+            logger.info("Товары не найдены.")
             return []
 
         for product in products:
-            # product.display()
             if product.image_url and save_image_all:
                 ImageDownloader.save_images(product.product_id, product.image_url)
-        print(f"Количество товаров: {len(products)}")
+        logger.info(f"Количество товаров: {len(products)}")
         return products
 
     def _parse_response(self, html_content: str) -> List[Product]:
         soup = BeautifulSoup(html_content, 'html.parser')
         products = []
 
-        # Находим все элементы товаров
         product_elements = soup.find_all('article', attrs={'data-auto': 'searchOrganic'})
         for elem in product_elements:
             product = Product.from_html_data(elem)
-            if product.product_id or product.name:  # Фильтруем пустые результаты
+            if product.product_id or product.name:
                 products.append(product)
         
         return products

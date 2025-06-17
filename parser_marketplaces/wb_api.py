@@ -18,7 +18,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.info("Приложение запущено внутри контейнера")
 
-
 @dataclass
 class Product:
     product_id: int
@@ -33,22 +32,18 @@ class Product:
     supplier_rating: Optional[float]
     pics: int
     first_image_path: Optional[str] = None
-    delivery_date: Optional[str] = None  # New field for delivery date
-
+    delivery_date: Optional[str] = None
 
     @staticmethod
     def from_api_data(data):
         image_path = f"image/{data.get('id')}/1.jpg" if data.get('pics') > 0 else None
         
-        # Calculate delivery date
         delivery_date = None
         time2 = data.get('time2')
-        logger.info(f"time2 = {time2}")
         if time2 is not None:
-            days = math.ceil(time2 / 24)  # Divide by 24 and round up
+            days = math.ceil(time2 / 24)
             current_date = datetime.now()
             delivery = current_date + timedelta(days=days)
-            # Format as "date month_name" (e.g., "15 June")
             month_names = [
                 "Января", "Февраля", "Марта", "Апреля", "Мая", "Июня",
                 "Июля", "Августа", "Сентября", "Октября", "Ноября", "Декабря"
@@ -71,13 +66,11 @@ class Product:
             delivery_date=delivery_date
         )
 
-
     @staticmethod
     def _get_color(data):
         if 'colors' in data and len(data['colors']) > 0:
             return data['colors'][0].get('name')
         return None
-
 
     @staticmethod
     def _get_price(data, price_type):
@@ -86,7 +79,6 @@ class Product:
             if price_raw is not None:
                 return int(price_raw / 100)
         return None
-
 
     def display(self):
         text = (
@@ -102,10 +94,9 @@ class Product:
             f"Средняя оценка продавца: {self.supplier_rating}\n"
             f"Количество фоток: {self.pics}\n"
             f"Путь к 1 изображению: {self.first_image_path}\n"
-            f"Дата доставки: {self.delivery_date}\n"  # Added delivery date to display
+            f"Дата доставки: {self.delivery_date}\n"
         )
         logger.info(text)
-
 
 class WildberriesAPI:
     BASE_URL = 'https://search.wb.ru/exactmatch/ru/male/v13/search'
@@ -127,24 +118,24 @@ class WildberriesAPI:
             "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36",
         }
 
-
-    def search_products(self, query, sort):
+    def search_products(self, query, sort, priceU):
         self.to_url_safe_format(query)
         params = {
-            'ab_old_spell': 'spell',
+            'ab_testing': 'spell',
             'appType': '1',
             'curr': 'rub',
             'dest': '-364776',
             'hide_dtype': '13',
             'lang': 'ru',
             'page': '1',
+            'priceU': priceU,
             'query': query,
             'resultset': 'catalog',
             'sort': sort,
             'spp': '30',
             'suppressSpellcheck': 'false',
             'uclusters': '3',
-            'uiv': '0'
+            'uiv': '0',
         }
         logger.info(f"Request URL: {self.BASE_URL}?{urlencode(params)}")
         response = requests.get(self.BASE_URL, headers=self.headers, params=params)
@@ -153,7 +144,6 @@ class WildberriesAPI:
         except ValueError:
             logger.error("Invalid JSON response")
             return {}
-
 
     @staticmethod
     def to_url_safe_format(query):
@@ -166,19 +156,28 @@ class WildberriesAPI:
                 encoded_query_url.append(char_encoded)
         return encoded_query_url
 
-
 class ProductManager:
     def __init__(self):
         self.api = WildberriesAPI()
 
-    def search_and_display(self, search_query: str, search_sort='popular', save_image_all=False):
-        response = self.api.search_products(search_query, search_sort)
+    def search_and_display(self, search_query: str, search_sort='popular', price_min='', price_max='', save_image_all=False):
+        try:
+            priceU = None  # Инициализируем priceU как None
+            if price_min.strip() or price_max.strip():  # Проверяем, задан ли хотя бы один параметр
+                min_val = int(float(price_min)) if price_min.strip() else 1
+                max_val = int(float(price_max)) if price_max.strip() else 1000000
+                priceU = f"{min_val * 100};{max_val * 100}"
+                logger.info(f"Сформирован priceU для поиска: {priceU}")
+        except ValueError as e:
+            logger.error(f"Ошибка при обработке цен: {e}, price_min={price_min}, price_max={price_max}")
+        priceU = None
+
+        response = self.api.search_products(search_query, search_sort, priceU)
         products = self._parse_response(response)[:16]
         if not products:
             logger.info("Товары не найдены.")
-            return
+            return []
         for product in products:
-            # product.display()  # Display product details including delivery date
             if product.pics > 0:
                 ImageDownloader.save_images(product.product_id, product.pics, save_image_all)
         logger.info(f"Количество товаров: {len(products)}")
@@ -187,7 +186,6 @@ class ProductManager:
     def _parse_response(self, response):
         products_raw = response.get('data', {}).get('products', [])
         return [Product.from_api_data(data) for data in products_raw]
-
 
 class ImageDownloader:
     @staticmethod
@@ -216,7 +214,6 @@ class ImageDownloader:
                 logger.error("Не удалось подключиться к серверу")
             except requests.exceptions.Timeout:
                 logger.error("Превышено время ожидания")
-
 
     @staticmethod
     def _determine_basket(_short_id):
@@ -274,7 +271,6 @@ class ImageDownloader:
             return '26'
         else:
             return '27'
-
 
 if __name__ == '__main__':
     manager = ProductManager()

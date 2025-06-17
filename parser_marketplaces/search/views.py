@@ -32,6 +32,11 @@ def search_view(request, product_name=None):
     sort_value = request.GET.get('sort', 'priceup')
     logger.info(f"Фильтр сортировки: {sort_value}")
 
+    # Получаем параметры цены из GET или POST
+    price_min = request.GET.get('price_min', request.POST.get('price_min', ''))
+    price_max = request.GET.get('price_max', request.POST.get('price_max', ''))
+    logger.info(f"Полученные параметры цены: price_min={price_min}, price_max={price_max}")
+
     if product_name:
         query = product_name
         # Получаем выбранные маркетплейсы из GET-параметров
@@ -44,7 +49,26 @@ def search_view(request, product_name=None):
             selected_marketplaces = request.POST.getlist('marketplaces', [marketplace_wb_name, marketplace_yandex_name, marketplace_mm_name])
             if not selected_marketplaces:
                 selected_marketplaces = [marketplace_wb_name, marketplace_yandex_name, marketplace_mm_name]
-            return redirect(f"{reverse('search:product_search', kwargs={'product_name': query})}?sort={sort_value}&{'&'.join(f'marketplaces={m}' for m in selected_marketplaces)}")
+            # Формируем параметры для redirect
+            price_min = request.POST.get('price_min', '')
+            price_max = request.POST.get('price_max', '')
+            logger.info(f"POST параметры цены: price_min={price_min}, price_max={price_max}")
+            price_params = []
+            # Проверяем, есть ли непустые значения, которые можно преобразовать в числа
+            if price_min.strip() or price_max.strip():
+                try:
+                    min_val = int(float(price_min)) if price_min.strip() else 1
+                    max_val = int(float(price_max)) if price_max.strip() else 1000000
+                    price_params.extend([f"price_min={min_val}", f"price_max={max_val}"])
+                    logger.info(f"Сформированы параметры для redirect: price_min={min_val}, price_max={max_val}")
+                except ValueError as e:
+                    logger.error(f"Ошибка при обработке цен: {e}, price_min={price_min}, price_max={price_max}")
+                    # Не добавляем параметры цен в случае ошибки
+            redirect_url = f"{reverse('search:product_search', kwargs={'product_name': query})}?sort={sort_value}&{'&'.join(f'marketplaces={m}' for m in selected_marketplaces)}"
+            if price_params:
+                redirect_url += f"&{'&'.join(price_params)}"
+            logger.info(f"Redirect URL: {redirect_url}")
+            return redirect(redirect_url)
     else:
         form = SearchForm()
         query = None
@@ -61,16 +85,21 @@ def search_view(request, product_name=None):
 
         # Поиск на выбранных маркетплейсах
         if marketplace_wb_name in selected_marketplaces:
-            wb_results = WBProductManager().search_and_display(query, wb_sort)
+            logger.info(f"Поиск на Wildberries: query={query}, sort={wb_sort}, price_min={price_min}, price_max={price_max}")
+            wb_results = WBProductManager().search_and_display(query, wb_sort, price_min=price_min, price_max=price_max)
         if marketplace_yandex_name in selected_marketplaces:
-            yandex_results = YandexProductManager().search_and_display(query, yandex_sort)
+            logger.info(f"Поиск на Яндекс.Маркете: query={query}, sort={yandex_sort}, price_min={price_min}, price_max={price_max}")
+            yandex_results = YandexProductManager().search_and_display(query, yandex_sort, price_min=price_min, price_max=price_max)
         if marketplace_mm_name in selected_marketplaces:
+            logger.info(f"Поиск на Мегамаркете: query={query}, sort={mm_sort}, price_min={price_min}, price_max={price_max}")
             mm_parser = MMProductParser(
                 product_name=query,
                 cookie_file_path=os.path.join(settings.BASE_DIR, "cookies.json"),
                 log_level="INFO",
                 max_pages=1,
                 sorting=mm_sort,
+                price_min=price_min,
+                price_max=price_max,
             )
             mm_parser.parse()
             mm_results = mm_parser.parsed_offers
@@ -80,6 +109,7 @@ def search_view(request, product_name=None):
             user=request.user,
             query_text=query,
             sort_value=sort_value,
+            price_range = f"{price_min}-{price_max}",
             marketplace_names=json.dumps(selected_marketplaces)
         )
 
@@ -211,7 +241,7 @@ def search_view(request, product_name=None):
                 display_results.sort(key=lambda p: (p.price_product is None, p.price_product if p.price_product is not None else 0), reverse=True)
             elif sort_value == "rate":
                 display_results.sort(key=lambda p: (p.review_rating is None, p.review_rating if p.review_rating is not None else 0), reverse=True)
-
+        # price_range = f"{price_min if price_min.strip() else '1'}-{price_max if price_max.strip() else '1000000'}" if (price_min.strip() or price_max.strip()) else ""
         data = {
             'title': f'Результаты поиска товара "{query}"',
             'products': display_results,
@@ -220,7 +250,9 @@ def search_view(request, product_name=None):
             'back_label': 'Вернуться к поиску',
             'selected_marketplaces': selected_marketplaces,
         }
-
+        if price_min.strip() or price_max.strip():
+            data['price_min'] = price_min if price_min.strip() else '1'
+            data['price_max'] = price_max if price_max.strip() else '1000000'
         return render(request, 'product_results.html', context=data)
 
     return render(request, 'search/search_form.html', {
@@ -228,4 +260,6 @@ def search_view(request, product_name=None):
         'sort_options': sort_options,
         'current_sort': sort_value,
         'selected_marketplaces': selected_marketplaces,
+        'price_min': price_min,
+        'price_max': price_max,
     })

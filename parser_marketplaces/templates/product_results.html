@@ -5,6 +5,9 @@
     {% if sort_label %}
     <p class="text-muted mb-3">Фильтр: {{ sort_label }}</p>
     {% endif %}
+    {% if price_max or price_min %}
+    <p class="text-muted mb-3">Диапозон цены: {{ price_min }} - {{ price_max }}</p>
+    {% endif %}
     {% if products %}
         {% include 'includes/product_grid.html' with products=products %}
     {% else %}

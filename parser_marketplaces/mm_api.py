@@ -44,7 +44,6 @@ class Product:
 
     @property
     def bonus_percent(self) -> int:
-        """Рассчитать процент бонусов от цены"""
         return 0
 
 class ProductManager:
@@ -60,6 +59,8 @@ class ProductManager:
         log_level: str = "INFO",
         max_pages: int | None = None,
         sorting: int = 0,
+        price_min: str = '',
+        price_max: str = '',
     ):
         self.cookie_file_path = cookie_file_path
         self.connection_success_delay = delay or 1.8
@@ -76,6 +77,8 @@ class ProductManager:
         self.exclude = exclude
         self.threads = threads or 1
         self.sorting = sorting
+        self.price_min = price_min
+        self.price_max = price_max
         self.scraped_tems_counter = 0
         self.address_id = None
         self.lock = threading.Lock()
@@ -84,7 +87,6 @@ class ProductManager:
         self.session = self._new_session()
 
     def _new_session(self) -> requests.Session:
-        """Создание новой сессии"""
         session = requests.Session(impersonate="chrome")
         session.cookies.update(self.cookie_dict or {})
         session.cookies["adult_disclaimer_confirmed"] = "1"
@@ -100,7 +102,6 @@ class ProductManager:
         return logging.getLogger("rich")
 
     def _set_up(self) -> None:
-        """Парсинг и валидация конфигурации"""
         self.cookie_dict = self.cookie_file_path and self.parse_cookie_file(self.cookie_file_path)
         if self.include and not self.validate_regex(self.include):
             sys.exit(f'Неверное выражение "{self.include}"!')
@@ -108,15 +109,14 @@ class ProductManager:
             sys.exit(f'Неверное выражение "{self.exclude}"!')
 
     def parse(self) -> None:
-        """Метод запуска парсинга"""
         self.start_time = datetime.now()
         self.logger.info("Поиск товара: %s", self.product_name)
         self.logger.info("Потоков: %s", self.threads)
         self.logger.info("Сортировка: %s", self.sorting)
+        self.logger.info("Фильтры цен: price_min=%s, price_max=%s", self.price_min, self.price_max)
         self.logger.info("%s %s", self.product_name, self.start_time.strftime("%d-%m-%Y %H:%M:%S"))
         self._parse_multi_page()
         self.logger.info("Спаршено %s товаров", self.scraped_tems_counter)
-        # self._output_offers()
 
     def slugify(self, text: str) -> str:
         lowercase_text = text.lower()
@@ -165,7 +165,6 @@ class ProductManager:
         sys.exit("Ошибка получения данных api")
 
     def _get_headers_with_referer(self, referer_url: str) -> dict:
-        """Возвращает заголовки для API запросов с динамическим referer"""
         headers = {
             "accept": "application/json",
             "accept-encoding": "gzip, deflate, br, zstd",
@@ -189,7 +188,6 @@ class ProductManager:
         return headers
 
     def _get_page(self, offset: int) -> dict:
-        """Получить страницу поиска"""
         json_data = {
             "requestVersion": 10,
             "limit": 44,
@@ -208,6 +206,23 @@ class ProductManager:
             "selectedAssumedCollectionId": None,
             "merchant": None,
         }
+        try:
+            if self.price_min.strip():
+                json_data["selectedFilters"].append({
+                    "filterId": "88C83F68482F447C9F4E401955196697",
+                    "type": 1,
+                    "value": str(int(float(self.price_min)))
+                })
+            if self.price_max.strip():
+                json_data["selectedFilters"].append({
+                    "filterId": "88C83F68482F447C9F4E401955196697",
+                    "type": 2,
+                    "value": str(int(float(self.price_max)))
+                })
+            logger.info(f"Фильтры цен: selectedFilters={json_data['selectedFilters']}")
+        except ValueError as e:
+            logger.error(f"Ошибка при обработке цен: {e}, price_min={self.price_min}, price_max={self.price_max}")
+
         headers = self._get_headers_with_referer("")
         return self._api_request(
             "https://megamarket.ru/api/mobile/v1/catalogService/catalog/search",
@@ -217,16 +232,15 @@ class ProductManager:
         )
 
     def _parse_page(self, response_json: dict) -> bool:
-        """Парсинг страницы поиска"""
         items_per_page = int(response_json.get("limit", 44))
         if items_per_page == 0:
             return False
         page_progress = self.rich_progress.add_task(f"[orange]Страница {int(int(response_json.get('offset', 0)) / items_per_page) + 1}")
         self.rich_progress.update(page_progress, total=len(response_json["items"]))
         for item in response_json["items"]:
-            if len(self.parsed_offers) >= 16:  # Проверяем, достигнуто ли 16 товаров
+            if len(self.parsed_offers) >= 16:
                 self.rich_progress.update(page_progress, advance=1)
-                return False  # Прерываем парсинг страницы
+                return False
             item_title = item["goods"]["title"]
             if self._exclude_check(item_title) or (item["isAvailable"] is not True) or (not self._include_check(item_title)):
                 self.rich_progress.update(page_progress, advance=1)
@@ -291,7 +305,6 @@ class ProductManager:
         return True
 
     def _create_progress_bar(self) -> None:
-        """Создание и запуск полосы прогресса"""
         self.rich_progress = Progress(
             "{task.description}",
             SpinnerColumn(),
@@ -302,14 +315,12 @@ class ProductManager:
         self.rich_progress.start()
 
     def _process_page(self, offset: int, main_job) -> tuple[bool, dict]:
-        """Получение и парсинг страницы поиска"""
         response_json = self._get_page(offset)
         parse_next_page = self._parse_page(response_json)
         self.rich_progress.update(main_job, advance=1)
         return parse_next_page, response_json
 
     def _parse_multi_page(self) -> None:
-        """Запуск и менеджмент парсинга поиска"""
         start_offset = 0
         item_count_total = None
 
@@ -318,7 +329,7 @@ class ProductManager:
         main_job = self.rich_progress.add_task("[green]Общий прогресс", total=1)
 
         max_threads = min(len(pages_to_parse), self.threads)
-        while pages_to_parse and len(self.parsed_offers) < 16:  # Останавливаем, если достигнуто 16 товаров
+        while pages_to_parse and len(self.parsed_offers) < 16:
             with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
                 futures = {executor.submit(self._process_page, page, main_job): page for page in pages_to_parse}
                 for future in concurrent.futures.as_completed(futures):
@@ -335,7 +346,7 @@ class ProductManager:
                             self.rich_progress.update(main_job, total=len(pages_to_parse) + 1)
                         if page in pages_to_parse:
                             pages_to_parse.remove(page)
-                        if parse_next_page and len(self.parsed_offers) < 16:  # Проверяем, не достигнуто ли 16 товаров
+                        if parse_next_page and len(self.parsed_offers) < 16:
                             next_page = page + items_per_page
                             if next_page < item_count_total and next_page not in pages_to_parse:
                                 pages_to_parse.append(next_page)
@@ -353,7 +364,6 @@ class ProductManager:
         self.rich_progress.stop()
 
     def _output_offers(self) -> None:
-        """Вывод спаршенных товаров в JSON файл и на консоль"""
         output_data = [
             {
                 "name": offer.name,

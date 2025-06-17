@@ -42,6 +42,16 @@
             {{ form.query }}
         </div>
         
+        <!-- Фильтр по цене для Wildberries -->
+        <div class="mb-3">
+            <label class="form-label">Цена:</label>
+            <div class="d-flex align-items-center">
+                <input type="number" class="form-control me-2" name="price_min" placeholder="От" min="0" step="1" style="width: 120px;">
+                <span class="me-2">-</span>
+                <input type="number" class="form-control" name="price_max" placeholder="До" min="0" step="1" style="width: 120px;">
+            </div>
+        </div>
+        
         <!-- Кнопка поиска -->
         <div class="mb-3">
             <button type="submit" class="btn btn-primary">Найти</button>
